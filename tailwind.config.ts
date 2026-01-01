@@ -62,6 +62,14 @@ export default {
           border: "hsl(var(--sidebar-border))",
           ring: "hsl(var(--sidebar-ring))",
         },
+        // Custom colors from the dashboard HTML snippet
+        "primary-dark": "#25bdb1",
+        "background-light": "#f8fcfb",
+        "background-dark": "#112120",
+        "surface-light": "#ffffff",
+        "surface-dark": "#1a2c2b",
+        "text-main": "#0e1b1a",
+        "text-secondary": "#4e9791",
       },
       borderRadius: {
         lg: "var(--radius)",
