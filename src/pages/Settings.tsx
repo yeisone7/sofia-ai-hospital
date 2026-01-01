@@ -5,89 +5,239 @@ import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
 
 // Interfaces para la estructura de datos esperada
-interface Appointment {
-  id: string;
-  patientName: string;
-  service: string;
-  time: string;
-  date: string; // e.g., "Oct 24"
-  status: 'Confirmada' | 'Pendiente' | 'Primera vez' | 'Cancelada';
+interface ClinicInfo {
+  name: string;
+  specialty: string;
+  description: string;
+  logoUrl: string;
 }
 
-const Appointments = () => {
+interface OperatingDayHours {
+  open: boolean;
+  startTime: string;
+  endTime: string;
+}
+
+interface OperatingHours {
+  timezone: string;
+  weekdays: OperatingDayHours;
+  saturday: OperatingDayHours;
+  sunday: OperatingDayHours;
+}
+
+interface ContactInfo {
+  address: string;
+  phone: string;
+  email: string;
+}
+
+interface Service {
+  id: string;
+  name: string;
+}
+
+interface ClinicSettingsData {
+  clinicInfo: ClinicInfo;
+  contactInfo: ContactInfo;
+  operatingHours: OperatingHours;
+  services: Service[];
+  whatsappWebhookUrl: string;
+}
+
+const Settings = () => {
   const { user, isLoading: isSessionLoading } = useSession();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [allAppointments, setAllAppointments] = useState<Appointment[]>([]);
-  const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
-  const [appointmentsLoading, setAppointmentsLoading] = useState(true);
-  const [appointmentsError, setAppointmentsError] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState<'all' | 'Confirmada' | 'Pendiente' | 'Primera vez' | 'Cancelada'>('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [settings, setSettings] = useState<ClinicSettingsData>({
+    clinicInfo: {
+      name: '',
+      specialty: '',
+      description: '',
+      logoUrl: '',
+    },
+    contactInfo: {
+      address: '',
+      phone: '',
+      email: '',
+    },
+    operatingHours: {
+      timezone: 'America/Mexico_City',
+      weekdays: { open: true, startTime: '09:00', endTime: '18:00' },
+      saturday: { open: true, startTime: '09:00', endTime: '14:00' },
+      sunday: { open: false, startTime: '09:00', endTime: '14:00' },
+    },
+    services: [],
+    whatsappWebhookUrl: 'https://api.laura.ai/v1/hooks/wa/cli_892301', // Placeholder
+  });
+
+  const [settingsLoading, setSettingsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [settingsError, setSettingsError] = useState<string | null>(null);
+  const [newServiceInput, setNewServiceInput] = useState('');
+  const [logoFile, setLogoFile] = useState<File | null>(null);
 
   useEffect(() => {
     if (!isSessionLoading && !user) {
       navigate('/login');
     } else if (user) {
-      fetchAppointmentsData();
+      fetchSettingsData();
     }
   }, [user, isSessionLoading, navigate]);
 
-  useEffect(() => {
-    applyFilters();
-  }, [allAppointments, filterStatus, searchQuery]);
-
-  const fetchAppointmentsData = async () => {
-    setAppointmentsLoading(true);
-    setAppointmentsError(null);
+  const fetchSettingsData = async () => {
+    setSettingsLoading(true);
+    setSettingsError(null);
     try {
-      // TODO: Fetch all appointments from Supabase
-      // Example: const { data, error } = await supabase.from('appointments').select('*').order_by('date', { ascending: true });
+      // TODO: Fetch clinic settings from Supabase
+      // Example: const { data, error } = await supabase.from('clinic_settings').select('*').single();
       // if (error) throw error;
-      // setAllAppointments(data);
+      // setSettings(data);
 
       // Placeholder data
-      const dummyAppointments: Appointment[] = [
-        { id: 'app1', patientName: 'Sofia Lopez', service: 'Ortodoncia', time: '14:00', date: 'Oct 24', status: 'Confirmada' },
-        { id: 'app2', patientName: 'Miguel Ángel', service: 'Limpieza', time: '15:30', date: 'Oct 24', status: 'Pendiente' },
-        { id: 'app3', patientName: 'Ana Torres', service: 'Consulta General', time: '09:00', date: 'Oct 25', status: 'Primera vez' },
-        { id: 'app4', patientName: 'Juan Pérez', service: 'Extracción', time: '10:00', date: 'Oct 25', status: 'Confirmada' },
-        { id: 'app5', patientName: 'Laura García', service: 'Revisión', time: '11:00', date: 'Oct 26', status: 'Pendiente' },
-        { id: 'app6', patientName: 'Pedro Sánchez', service: 'Blanqueamiento', time: '16:00', date: 'Oct 26', status: 'Cancelada' },
-        { id: 'app7', patientName: 'Elena Ruiz', service: 'Endodoncia', time: '10:30', date: 'Oct 27', status: 'Confirmada' },
-        { id: 'app8', patientName: 'Ricardo Castro', service: 'Implante', time: '12:00', date: 'Oct 27', status: 'Pendiente' },
-        { id: 'app9', patientName: 'Isabel Vargas', service: 'Ortodoncia', time: '17:00', date: 'Oct 28', status: 'Primera vez' },
-        { id: 'app10', patientName: 'Fernando Díaz', service: 'Limpieza', time: '09:00', date: 'Oct 28', status: 'Confirmada' },
-      ];
-      setAllAppointments(dummyAppointments);
-      // Para probar el estado vacío, descomenta la siguiente línea y comenta la anterior:
-      // setAllAppointments([]);
-
+      setSettings({
+        clinicInfo: {
+          name: 'Centro Médico Vida Sana',
+          specialty: 'Medicina General',
+          description: 'Centro médico comprometido con la salud integral de las familias, ofreciendo atención personalizada y tecnología de vanguardia.',
+          logoUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqTjqYS7bZF9UDf3Gqf4OzV3l-OK2I74o8hTRUjco_eiyyacb9QNClEqJ5OvwomIFmzJ-SwRcDNrVuYGA8ktqIowJgZqQ9vkuqJmauVmspaoDbTHcm7tZjodbPumN6sgBGxYNWX9ELn2NmPHEYJmmQ',
+        },
+        contactInfo: {
+          address: 'Av. Reforma 222, Piso 4, Ciudad de México',
+          phone: '+52 55 1234 5678',
+          email: 'contacto@vidasana.mx',
+        },
+        operatingHours: {
+          timezone: 'America/Mexico_City',
+          weekdays: { open: true, startTime: '09:00', endTime: '18:00' },
+          saturday: { open: true, startTime: '09:00', endTime: '14:00' },
+          sunday: { open: false, startTime: '09:00', endTime: '14:00' },
+        },
+        services: [
+          { id: 's1', name: 'Medicina General' },
+          { id: 's2', name: 'Pediatría' },
+          { id: 's3', name: 'Ginecología' },
+        ],
+        whatsappWebhookUrl: 'https://api.laura.ai/v1/hooks/wa/cli_892301',
+      });
     } catch (error: any) {
-      console.error('Error fetching appointments data:', error);
-      setAppointmentsError('No se pudieron cargar las citas.');
-      showError('Error al cargar las citas: ' + error.message);
+      console.error('Error fetching settings data:', error);
+      setSettingsError('No se pudieron cargar los ajustes de la clínica.');
+      showError('Error al cargar ajustes: ' + error.message);
     } finally {
-      setAppointmentsLoading(false);
+      setSettingsLoading(false);
     }
   };
 
-  const applyFilters = () => {
-    let tempAppointments = [...allAppointments];
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    setSettingsError(null);
+    try {
+      // TODO: Upload logo to Supabase Storage if changed
+      // Example: if (logoFile) { const { data, error } = await supabase.storage.from('logos').upload(...); }
 
-    if (filterStatus !== 'all') {
-      tempAppointments = tempAppointments.filter(app => app.status === filterStatus);
+      // TODO: Update clinic settings in Supabase
+      // Example: const { error } = await supabase.from('clinic_settings').update(settings).eq('id', user.id);
+      // if (error) throw error;
+
+      showSuccess('Ajustes guardados correctamente.');
+    } catch (error: any) {
+      console.error('Error saving settings:', error);
+      setSettingsError('Error al guardar los ajustes: ' + error.message);
+      showError('Error al guardar ajustes: ' + error.message);
+    } finally {
+      setIsSaving(false);
     }
+  };
 
-    if (searchQuery) {
-      tempAppointments = tempAppointments.filter(app =>
-        app.patientName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        app.service.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+  const handleCancel = () => {
+    // Revert to initial state or refetch data
+    fetchSettingsData();
+    showSuccess('Cambios cancelados.');
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>, section: keyof ClinicSettingsData, field: string) => {
+    setSettings(prev => ({
+      ...prev,
+      [section]: {
+        ...prev[section],
+        [field]: e.target.value,
+      },
+    }));
+  };
+
+  const handleOperatingHoursToggle = (day: keyof OperatingHours, value: boolean) => {
+    setSettings(prev => ({
+      ...prev,
+      operatingHours: {
+        ...prev.operatingHours,
+        [day]: {
+          ...prev.operatingHours[day],
+          open: value,
+        },
+      },
+    }));
+  };
+
+  const handleOperatingHoursTimeChange = (day: keyof OperatingHours, timeType: 'startTime' | 'endTime', value: string) => {
+    setSettings(prev => ({
+      ...prev,
+      operatingHours: {
+        ...prev.operatingHours,
+        [day]: {
+          ...prev.operatingHours[day],
+          [timeType]: value,
+        },
+      },
+    }));
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setLogoFile(file);
+      // Optionally, show a preview immediately
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setSettings(prev => ({
+          ...prev,
+          clinicInfo: {
+            ...prev.clinicInfo,
+            logoUrl: reader.result as string,
+          },
+        }));
+      };
+      reader.readAsDataURL(file);
     }
+  };
 
-    setFilteredAppointments(tempAppointments);
+  const handleAddService = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newServiceInput.trim() && !settings.services.some(s => s.name.toLowerCase() === newServiceInput.trim().toLowerCase())) {
+      setSettings(prev => ({
+        ...prev,
+        services: [...prev.services, { id: `s${Date.now()}`, name: newServiceInput.trim() }],
+      }));
+      setNewServiceInput('');
+    }
+  };
+
+  const handleRemoveService = (serviceId: string) => {
+    setSettings(prev => ({
+      ...prev,
+      services: prev.services.filter(s => s.id !== serviceId),
+    }));
+  };
+
+  const handleCopyWebhook = async () => {
+    try {
+      await navigator.clipboard.writeText(settings.whatsappWebhookUrl);
+      showSuccess('URL del Webhook copiada al portapapeles.');
+    } catch (err) {
+      showError('Error al copiar la URL.');
+      console.error('Failed to copy: ', err);
+    }
   };
 
   const handleLogout = async () => {
@@ -99,32 +249,104 @@ const Appointments = () => {
     }
   };
 
-  const handleNewAppointment = () => {
-    showSuccess('Funcionalidad "Nueva Cita" en desarrollo.');
-    // TODO: Implement logic for creating a new appointment
-  };
+  const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
+  const userRole = user?.user_metadata?.role || 'Admin';
+  const userAvatar = user?.user_metadata?.avatar_url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBKGJqOrxKC8dOGnL2B3rcuN8cbystShMdVLZ1f22GeobGXHdn17h731ohnBgSFGJzHSaFFsKSuto3ONj63pIfPpeClcp3tWAb-bclE_Hdvuy0R-QbHkMZiM6WYYc3nXNPjiDH0EMCfTWpN1A8GBrVRx2om-uuCNIMSN-DSrG8z2WZluh5jVJxmObR7BrX_OOftM87dob0SyNkuMtcrKkmQBolg7ESQ8bWASHic7KVtOqf3B-tpEFB-W_Ojbd_zMuoMOU5VqJiH_A'; // Placeholder
 
-  const handleViewAppointmentDetails = (appointmentId: string) => {
-    showSuccess(`Ver detalles de la cita ${appointmentId} en desarrollo.`);
-    // TODO: Implement navigation to appointment details page
-  };
+  const renderLoadingState = () => (
+    <div className="max-w-[1000px] mx-auto w-full px-6 py-8 md:px-12 md:py-10 pb-24 animate-pulse">
+      {/* Page Header Skeleton */}
+      <div className="mb-8 md:mb-10">
+        <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+      </div>
 
-  if (isSessionLoading || appointmentsLoading) {
+      {/* Form Sections Skeleton */}
+      {[...Array(4)].map((_, sectionIndex) => (
+        <div key={sectionIndex} className="bg-surface-light dark:bg-surface-dark rounded-2xl p-6 md:p-8 shadow-sm border border-border-color/50 dark:border-slate-800 mb-8">
+          <div className="flex items-center gap-3 mb-6 border-b border-border-color/50 dark:border-slate-700 pb-4">
+            <div className="p-2 bg-primary/10 rounded-lg size-8"></div>
+            <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            {sectionIndex === 0 && ( // Basic Info section
+              <div className="md:col-span-3 flex flex-col gap-3 items-center md:items-start">
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-2/3"></div>
+                <div className="w-32 h-32 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+              </div>
+            )}
+            <div className={`${sectionIndex === 0 ? 'md:col-span-9' : 'md:col-span-12'} flex flex-col gap-5`}>
+              {[...Array(sectionIndex === 0 ? 3 : sectionIndex === 1 ? 3 : sectionIndex === 2 ? 4 : 2)].map((_, fieldIndex) => (
+                <div key={fieldIndex} className="flex flex-col gap-2">
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
+                  <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-lg w-full"></div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  if (settingsLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
-        <p className="text-text-main dark:text-white">Cargando citas...</p>
+      <div className="bg-background-light dark:bg-background-dark text-text-main h-screen overflow-hidden flex">
+        {/* Side Navigation Bar */}
+        <aside className="w-72 bg-surface-light dark:bg-surface-dark border-r border-[#e7f3f2] dark:border-[#2a3c3b] flex flex-col hidden md:flex flex-shrink-0 transition-all z-20">
+          <div className="p-6 pb-2">
+            <div className="flex items-center gap-3">
+              <div className="bg-primary/20 p-2 rounded-xl">
+                <span className="material-symbols-outlined text-primary-dark font-bold">medical_services</span>
+              </div>
+              <div className="flex flex-col">
+                <h1 className="text-text-main dark:text-white text-lg font-bold leading-tight">Laura AI</h1>
+                <p className="text-text-secondary text-xs font-medium">Asistente Virtual</p>
+              </div>
+            </div>
+          </div>
+          <nav className="flex-1 px-4 py-6 flex flex-col gap-2 overflow-y-auto">
+            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-xl mb-2"></div>
+            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-xl mb-2"></div>
+            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-xl mb-2"></div>
+            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-xl mb-2"></div>
+            <div className="h-10 bg-primary/10 dark:bg-primary/20 rounded-xl mb-2"></div> {/* Active state for settings */}
+            <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-xl mb-2"></div>
+          </nav>
+          <div className="p-4 border-t border-[#e7f3f2] dark:border-[#2a3c3b]">
+            <div className="h-12 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+          </div>
+        </aside>
+        {/* Main Content Wrapper */}
+        <div className="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark relative">
+          {/* Top Header Skeleton */}
+          <header className="h-20 bg-surface-light dark:bg-surface-dark border-b border-[#e7f3f2] dark:border-[#2a3c3b] flex items-center justify-between px-6 sticky top-0 z-10">
+            <div className="flex items-center gap-4">
+              <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+              <div className="flex flex-col gap-1">
+                <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-40"></div>
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+              </div>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+              <div className="h-9 w-24 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+            </div>
+          </header>
+          {renderLoadingState()}
+        </div>
       </div>
     );
   }
 
-  if (appointmentsError) {
+  if (settingsError) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
         <div className="text-center p-4 bg-surface-light dark:bg-surface-dark rounded-lg shadow-md">
           <h3 className="text-lg font-bold text-red-600 mb-2">Error</h3>
-          <p className="text-text-main dark:text-white">{appointmentsError}</p>
+          <p className="text-text-main dark:text-white">{settingsError}</p>
           <button
-            onClick={fetchAppointmentsData}
+            onClick={fetchSettingsData}
             className="mt-4 bg-primary hover:bg-primary-dark text-text-main font-bold py-2 px-4 rounded-xl"
           >
             Reintentar
@@ -133,141 +355,6 @@ const Appointments = () => {
       </div>
     );
   }
-
-  const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
-  const userRole = user?.user_metadata?.role || 'Admin';
-  const userAvatar = user?.user_metadata?.avatar_url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBKGJqOrxKC8dOGnL2B3rcuN8cbystShMdVLZ1f22GeobGXHdn17h731ohnBgSFGJzHSaFFsKSuto3ONj63pIfPpeClcp3tWAb-bclE_Hdvuy0R-QbHkMZiM6WYYc3nXNPjiDH0EMCfTWpN1A8GBrVRx2om-uuCNIMSN-DSrG8z2WZluh5jVJxmObR7BrX_OOftM87dob0SyNkuMtcrKkmQBolg7ESQ8bWASHic7KVtOqf3B-tpEFB-W_Ojbd_zMuoMOU5VqJiH_A'; // Placeholder
-
-  const getStatusBadgeClasses = (status: Appointment['status']) => {
-    switch (status) {
-      case 'Confirmada': return 'bg-green-100 text-green-700';
-      case 'Pendiente': return 'bg-orange-100 text-orange-700';
-      case 'Primera vez': return 'bg-blue-100 text-blue-700';
-      case 'Cancelada': return 'bg-red-100 text-red-700';
-      default: return 'bg-gray-100 text-gray-700';
-    }
-  };
-
-  const renderLoadingState = () => (
-    <div className="max-w-[1200px] mx-auto flex flex-col gap-8 animate-pulse">
-      {/* Page Title & Primary Action Skeleton */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex-1">
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-        </div>
-        <div className="h-11 w-full sm:w-40 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-      </div>
-
-      {/* Tabs Navigation Skeleton */}
-      <div className="border-b border-[#d0e7e5] dark:border-[#2a3c3b]">
-        <div className="flex gap-6 sm:gap-8 overflow-x-auto no-scrollbar">
-          <div className="h-8 w-24 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
-          <div className="h-8 w-24 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
-          <div className="h-8 w-24 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
-          <div className="h-8 w-24 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
-        </div>
-      </div>
-
-      {/* Stats Cards Skeleton */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[...Array(4)].map((_, i) => (
-          <div key={i} className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3">
-            <div className="flex items-center justify-between">
-              <div className="p-2 bg-gray-200 dark:bg-gray-700 rounded-lg size-10"></div>
-              <div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-            </div>
-            <div>
-              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/5 mb-1"></div>
-              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-2/5"></div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Appointments List Skeleton */}
-      <div className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col overflow-hidden">
-        <div className="p-5 border-b border-[#e7f3f2] dark:border-[#2a3c3b] flex justify-between items-center bg-[#fafdfd] dark:bg-white/5">
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-          <div className="h-8 w-40 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
-        </div>
-        <div className="divide-y divide-[#f0f7f6] dark:divide-[#2a3c3b]">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="p-4 flex gap-4 items-center">
-              <div className="flex flex-col items-center bg-gray-200 dark:bg-gray-700 rounded-lg p-2 min-w-[50px] h-[60px]"></div>
-              <div className="flex-1">
-                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-1"></div>
-                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-              </div>
-              <div className="h-5 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
-              <div className="h-6 w-6 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderEmptyState = () => (
-    <div className="max-w-[1200px] mx-auto flex flex-col gap-8">
-      {/* Page Title & Primary Action */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h3 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">Gestión de Citas</h3>
-          <p className="text-text-secondary mt-1">Aquí puedes ver y gestionar todas las citas de tu clínica.</p>
-        </div>
-        <button
-          onClick={handleNewAppointment}
-          className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-text-main font-bold px-5 h-11 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95 w-full sm:w-auto"
-        >
-          <span className="material-symbols-outlined text-[20px]">add</span>
-          <span>Nueva Cita</span>
-        </button>
-      </div>
-      {/* Tabs Navigation */}
-      <div className="border-b border-[#d0e7e5] dark:border-[#2a3c3b]">
-        <div className="flex gap-6 sm:gap-8 overflow-x-auto no-scrollbar">
-          <Link className="flex items-center gap-2 border-b-[3px] border-transparent pb-3 px-1 min-w-fit group hover:border-primary/30 transition-colors" to="/dashboard">
-            <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">dashboard</span>
-            <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Dashboard</span>
-          </Link>
-          <Link className="flex items-center gap-2 border-b-[3px] border-transparent pb-3 px-1 min-w-fit group hover:border-primary/30 transition-colors" to="/messages">
-            <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">chat</span>
-            <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Mensajes</span>
-          </Link>
-          <Link className="flex items-center gap-2 border-b-[3px] border-primary pb-3 px-1 min-w-fit" to="/appointments">
-            <span className="material-symbols-outlined text-primary text-[20px]">schedule</span>
-            <span className="text-text-main dark:text-white text-sm font-bold">Citas</span>
-          </Link>
-          <Link className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors group text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white" to="/doctors">
-            <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">stethoscope</span>
-            <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Médicos</span>
-          </Link>
-          <Link className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors group text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white" to="/settings">
-            <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">settings</span>
-            <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Configuración</span>
-          </Link>
-        </div>
-      </div>
-      {/* Empty State Content */}
-      <div className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-dashed border-border-light dark:border-border-dark p-12 flex flex-col items-center justify-center text-center min-h-[400px]">
-        <div className="bg-primary/10 text-primary-dark p-4 rounded-full mb-4">
-          <span className="material-symbols-outlined text-4xl">event_note</span>
-        </div>
-        <h3 className="text-xl font-bold text-text-main dark:text-white mb-2">No hay citas programadas</h3>
-        <p className="text-text-secondary mb-6 max-w-sm">
-          Parece que no tienes citas agendadas para este filtro. ¡Es un buen momento para organizar la semana o crear una nueva cita!
-        </p>
-        <button
-          onClick={handleNewAppointment}
-          className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-text-main font-bold px-5 h-11 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
-        >
-          <span className="material-symbols-outlined text-[20px]">add</span>
-          <span>Agendar Cita Ahora</span>
-        </button>
-      </div>
-    </div>
-  );
 
   return (
     <div className="bg-background-light dark:bg-background-dark text-text-main h-screen overflow-hidden flex">
@@ -310,10 +397,6 @@ const Appointments = () => {
           <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/reports' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/reports">
             <span className={`material-symbols-outlined ${location.pathname === '/reports' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>analytics</span>
             <p className={`text-sm font-medium ${location.pathname === '/reports' ? 'text-text-main dark:text-white' : ''}`}>Reportes</p>
-          </Link>
-          <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/settings' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/settings">
-            <span className={`material-symbols-outlined ${location.pathname === '/settings' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>settings</span>
-            <p className={`text-sm font-medium ${location.pathname === '/settings' ? 'text-text-main dark:text-white' : ''}`}>Configuración</p>
           </Link>
           <div className="mt-auto pt-4 border-t border-[#e7f3f2] dark:border-[#2a3c3b]">
             <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/help' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/help">
@@ -381,7 +464,7 @@ const Appointments = () => {
               </div>
             </div>
             {/* Form Container */}
-            <form id="settings-form" className="flex flex-col gap-8" onSubmit={handleSaveSettings}>
+            <form className="flex flex-col gap-8" onSubmit={handleSaveSettings}>
               {/* Section: Basic Info */}
               <div className="bg-surface-light dark:bg-surface-dark rounded-2xl p-6 md:p-8 shadow-sm border border-border-color/50 dark:border-slate-800">
                 <div className="flex items-center gap-3 mb-6 border-b border-border-color/50 dark:border-slate-700 pb-4">
@@ -744,4 +827,4 @@ const Appointments = () => {
   );
 };
 
-export default Dashboard;
+export default Settings;

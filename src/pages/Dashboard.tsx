@@ -246,6 +246,10 @@ const Dashboard = () => {
             <span className={`material-symbols-outlined ${location.pathname === '/reports' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>analytics</span>
             <p className={`text-sm font-medium ${location.pathname === '/reports' ? 'text-text-main dark:text-white' : ''}`}>Reportes</p>
           </Link>
+          <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/settings' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/settings">
+            <span className={`material-symbols-outlined ${location.pathname === '/settings' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>settings</span>
+            <p className={`text-sm font-medium ${location.pathname === '/settings' ? 'text-text-main dark:text-white' : ''}`}>Configuración</p>
+          </Link>
           <div className="mt-auto pt-4 border-t border-[#e7f3f2] dark:border-[#2a3c3b]">
             <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/help' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/help">
               <span className={`material-symbols-outlined ${location.pathname === '/help' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>help_outline</span>
@@ -347,10 +351,14 @@ const Dashboard = () => {
                   <span className={`material-symbols-outlined text-[20px] ${location.pathname === '/doctors' ? 'text-primary' : 'text-text-secondary group-hover:text-primary'}`}>stethoscope</span>
                   <span className={`text-sm font-bold ${location.pathname === '/doctors' ? 'text-text-main dark:text-white' : 'text-text-secondary group-hover:text-primary dark:text-gray-400'}`}>Médicos</span>
                 </Link>
-                <a className="flex items-center gap-2 border-b-[3px] border-transparent pb-3 px-1 min-w-fit group hover:border-primary/30 transition-colors" href="#">
-                  <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">settings</span>
-                  <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Configuración</span>
-                </a>
+                <Link className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 min-w-fit ${location.pathname === '/reports' ? 'border-primary' : 'border-transparent group hover:border-primary/30 transition-colors'}`} to="/reports">
+                  <span className={`material-symbols-outlined text-[20px] ${location.pathname === '/reports' ? 'text-primary' : 'text-text-secondary group-hover:text-primary'}`}>analytics</span>
+                  <span className={`text-sm font-bold ${location.pathname === '/reports' ? 'text-text-main dark:text-white' : 'text-text-secondary group-hover:text-primary dark:text-gray-400'}`}>Reportes</span>
+                </Link>
+                <Link className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 min-w-fit ${location.pathname === '/settings' ? 'border-primary' : 'border-transparent group hover:border-primary/30 transition-colors'}`} to="/settings">
+                  <span className={`material-symbols-outlined ${location.pathname === '/settings' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>settings</span>
+                  <span className={`text-sm font-bold ${location.pathname === '/settings' ? 'text-text-main dark:text-white' : 'text-text-secondary group-hover:text-primary dark:text-gray-400'}`}>Configuración</span>
+                </Link>
               </div>
             </div>
             {/* Stats Cards */}
