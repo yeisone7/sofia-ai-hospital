@@ -8,7 +8,8 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
-import Appointments from "./pages/Appointments"; // Importar la página de Citas
+import Appointments from "./pages/Appointments";
+import Doctors from "./pages/Doctors"; // Importar la página de Médicos
 import { SessionContextProvider } from "./integrations/supabase/session-context";
 
 const queryClient = new QueryClient();
@@ -25,7 +26,8 @@ const App = () => (
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/appointments" element={<Appointments />} /> {/* Ruta para la página de Citas */}
+            <Route path="/appointments" element={<Appointments />} />
+            <Route path="/doctors" element={<Doctors />} /> {/* Ruta para la página de Médicos */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

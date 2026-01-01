@@ -33,6 +33,8 @@
     --ring: 222.2 84% 4.9%;
 
     --radius: 0.5rem;
+    --radius-xl: 0.75rem; /* New */
+    --radius-2xl: 1rem; /* New */
 
     --sidebar-background: 0 0% 98%;
 
@@ -96,7 +98,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-display; /* Added font-display */
   }
 
   .material-symbols-outlined {

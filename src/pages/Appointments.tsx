@@ -109,10 +109,10 @@ const Appointments = () => {
     // TODO: Implement navigation to appointment details page
   };
 
-  if (isSessionLoading) {
+  if (isSessionLoading || appointmentsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
-        <p className="text-text-main dark:text-white">Cargando sesión...</p>
+        <p className="text-text-main dark:text-white">Cargando citas...</p>
       </div>
     );
   }
@@ -246,7 +246,7 @@ const Appointments = () => {
         </div>
       </div>
       {/* Empty State Content */}
-      <div className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col items-center justify-center p-8 text-center min-h-[400px]">
+      <div className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-dashed border-border-light dark:border-border-dark p-12 flex flex-col items-center justify-center text-center min-h-[400px]">
         <div className="bg-primary/10 text-primary-dark p-4 rounded-full mb-4">
           <span className="material-symbols-outlined text-4xl">event_note</span>
         </div>
@@ -294,6 +294,10 @@ const Appointments = () => {
           <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/appointments' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/appointments">
             <span className={`material-symbols-outlined ${location.pathname === '/appointments' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>calendar_month</span>
             <p className={`text-sm font-medium ${location.pathname === '/appointments' ? 'text-text-main dark:text-white' : ''}`}>Citas</p>
+          </Link>
+          <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/doctors' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/doctors">
+            <span className={`material-symbols-outlined ${location.pathname === '/doctors' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>stethoscope</span>
+            <p className={`text-sm font-medium ${location.pathname === '/doctors' ? 'text-text-main dark:text-white' : ''}`}>Médicos</p>
           </Link>
           <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/reports' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/reports">
             <span className={`material-symbols-outlined ${location.pathname === '/reports' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>analytics</span>
@@ -494,24 +498,28 @@ const Appointments = () => {
                   </div>
                 </div>
                 <div className="divide-y divide-[#f0f7f6] dark:divide-[#2a3c3b]">
-                  {filteredAppointments.map((appointment) => (
-                    <div key={appointment.id} className="p-4 hover:bg-[#f8fcfb] dark:hover:bg-white/5 transition-colors cursor-pointer flex gap-4 items-center" onClick={() => handleViewAppointmentDetails(appointment.id)}>
-                      <div className="flex flex-col items-center bg-white dark:bg-black/20 rounded-lg p-2 min-w-[50px] shadow-sm">
-                        <span className="text-xs font-bold text-primary-dark uppercase">{appointment.date.split(' ')[0]}</span>
-                        <span className="text-xl font-bold text-text-main dark:text-white">{appointment.date.split(' ')[1]}</span>
+                  {filteredAppointments.length === 0 ? (
+                    <div className="p-4 text-center text-text-secondary">No hay citas que coincidan con los filtros.</div>
+                  ) : (
+                    filteredAppointments.map((appointment) => (
+                      <div key={appointment.id} className="p-4 hover:bg-[#f8fcfb] dark:hover:bg-white/5 transition-colors cursor-pointer flex gap-4 items-center" onClick={() => handleViewAppointmentDetails(appointment.id)}>
+                        <div className="flex flex-col items-center bg-white dark:bg-black/20 rounded-lg p-2 min-w-[50px] shadow-sm">
+                          <span className="text-xs font-bold text-primary-dark uppercase">{appointment.date.split(' ')[0]}</span>
+                          <span className="text-xl font-bold text-text-main dark:text-white">{appointment.date.split(' ')[1]}</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-text-main dark:text-white">{appointment.patientName}</p>
+                          <p className="text-xs text-text-secondary">{appointment.service} • {appointment.time}</p>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${getStatusBadgeClasses(appointment.status)}`}>
+                          {appointment.status}
+                        </span>
+                        <button className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md text-text-secondary">
+                          <span className="material-symbols-outlined text-[20px]">arrow_forward_ios</span>
+                        </button>
                       </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-bold text-text-main dark:text-white">{appointment.patientName}</p>
-                        <p className="text-xs text-text-secondary">{appointment.service} • {appointment.time}</p>
-                      </div>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${getStatusBadgeClasses(appointment.status)}`}>
-                        {appointment.status}
-                      </span>
-                      <button className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md text-text-secondary">
-                        <span className="material-symbols-outlined text-[20px]">arrow_forward_ios</span>
-                      </button>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </div>
               </div>
             </div>
