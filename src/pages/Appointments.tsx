@@ -61,6 +61,8 @@ const Appointments = () => {
         { id: 'app10', patientName: 'Fernando Díaz', service: 'Limpieza', time: '09:00', date: 'Oct 28', status: 'Confirmada' },
       ];
       setAllAppointments(dummyAppointments);
+      // Para probar el estado vacío, descomenta la siguiente línea y comenta la anterior:
+      // setAllAppointments([]);
 
     } catch (error: any) {
       console.error('Error fetching appointments data:', error);
@@ -107,10 +109,10 @@ const Appointments = () => {
     // TODO: Implement navigation to appointment details page
   };
 
-  if (isSessionLoading || appointmentsLoading) {
+  if (isSessionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
-        <p className="text-text-main dark:text-white">Cargando citas...</p>
+        <p className="text-text-main dark:text-white">Cargando sesión...</p>
       </div>
     );
   }
@@ -145,6 +147,123 @@ const Appointments = () => {
       default: return 'bg-gray-100 text-gray-700';
     }
   };
+
+  const renderLoadingState = () => (
+    <div className="max-w-[1200px] mx-auto flex flex-col gap-8 animate-pulse">
+      {/* Page Title & Primary Action Skeleton */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex-1">
+          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+        </div>
+        <div className="h-11 w-full sm:w-40 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+      </div>
+
+      {/* Tabs Navigation Skeleton */}
+      <div className="border-b border-[#d0e7e5] dark:border-[#2a3c3b]">
+        <div className="flex gap-6 sm:gap-8 overflow-x-auto no-scrollbar">
+          <div className="h-8 w-24 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
+          <div className="h-8 w-24 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
+          <div className="h-8 w-24 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
+          <div className="h-8 w-24 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
+        </div>
+      </div>
+
+      {/* Stats Cards Skeleton */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div className="p-2 bg-gray-200 dark:bg-gray-700 rounded-lg size-10"></div>
+              <div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+            </div>
+            <div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/5 mb-1"></div>
+              <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-2/5"></div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Appointments List Skeleton */}
+      <div className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col overflow-hidden">
+        <div className="p-5 border-b border-[#e7f3f2] dark:border-[#2a3c3b] flex justify-between items-center bg-[#fafdfd] dark:bg-white/5">
+          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+          <div className="h-8 w-40 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
+        </div>
+        <div className="divide-y divide-[#f0f7f6] dark:divide-[#2a3c3b]">
+          {[...Array(5)].map((_, i) => (
+            <div key={i} className="p-4 flex gap-4 items-center">
+              <div className="flex flex-col items-center bg-gray-200 dark:bg-gray-700 rounded-lg p-2 min-w-[50px] h-[60px]"></div>
+              <div className="flex-1">
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-1"></div>
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+              </div>
+              <div className="h-5 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              <div className="h-6 w-6 bg-gray-200 dark:bg-gray-700 rounded-md"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderEmptyState = () => (
+    <div className="max-w-[1200px] mx-auto flex flex-col gap-8">
+      {/* Page Title & Primary Action */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">Gestión de Citas</h3>
+          <p className="text-text-secondary mt-1">Aquí puedes ver y gestionar todas las citas de tu clínica.</p>
+        </div>
+        <button
+          onClick={handleNewAppointment}
+          className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-text-main font-bold px-5 h-11 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95 w-full sm:w-auto"
+        >
+          <span className="material-symbols-outlined text-[20px]">add</span>
+          <span>Nueva Cita</span>
+        </button>
+      </div>
+      {/* Tabs Navigation */}
+      <div className="border-b border-[#d0e7e5] dark:border-[#2a3c3b]">
+        <div className="flex gap-6 sm:gap-8 overflow-x-auto no-scrollbar">
+          <Link className="flex items-center gap-2 border-b-[3px] border-transparent pb-3 px-1 min-w-fit group hover:border-primary/30 transition-colors" to="/dashboard">
+            <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">chat</span>
+            <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Mensajes</span>
+          </Link>
+          <Link className="flex items-center gap-2 border-b-[3px] border-primary pb-3 px-1 min-w-fit" to="/appointments">
+            <span className="material-symbols-outlined text-primary text-[20px]">schedule</span>
+            <span className="text-text-main dark:text-white text-sm font-bold">Citas</span>
+          </Link>
+          <Link className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors group text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white" to="/doctors">
+            <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">stethoscope</span>
+            <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Médicos</span>
+          </Link>
+          <Link className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors group text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white" to="/settings">
+            <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">settings</span>
+            <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Configuración</span>
+          </Link>
+        </div>
+      </div>
+      {/* Empty State Content */}
+      <div className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col items-center justify-center p-8 text-center min-h-[400px]">
+        <div className="bg-primary/10 text-primary-dark p-4 rounded-full mb-4">
+          <span className="material-symbols-outlined text-4xl">event_note</span>
+        </div>
+        <h3 className="text-xl font-bold text-text-main dark:text-white mb-2">No hay citas programadas</h3>
+        <p className="text-text-secondary mb-6 max-w-sm">
+          Parece que no tienes citas agendadas para este filtro. ¡Es un buen momento para organizar la semana o crear una nueva cita!
+        </p>
+        <button
+          onClick={handleNewAppointment}
+          className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-text-main font-bold px-5 h-11 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95"
+        >
+          <span className="material-symbols-outlined text-[20px]">add</span>
+          <span>Agendar Cita Ahora</span>
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="bg-background-light dark:bg-background-dark text-text-main h-screen overflow-hidden flex">
@@ -252,128 +371,130 @@ const Appointments = () => {
         </header>
         {/* Scrollable Main Content */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="max-w-[1200px] mx-auto flex flex-col gap-8">
-            {/* Page Title & Primary Action */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">Gestión de Citas</h3>
-                <p className="text-text-secondary mt-1">Aquí puedes ver y gestionar todas las citas de tu clínica.</p>
-              </div>
-              <button
-                onClick={handleNewAppointment}
-                className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-text-main font-bold px-5 h-11 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95 w-full sm:w-auto"
-              >
-                <span className="material-symbols-outlined text-[20px]">add</span>
-                <span>Nueva Cita</span>
-              </button>
-            </div>
-            {/* Tabs Navigation */}
-            <div className="border-b border-[#d0e7e5] dark:border-[#2a3c3b]">
-              <div className="flex gap-6 sm:gap-8 overflow-x-auto no-scrollbar">
-                <Link className="flex items-center gap-2 border-b-[3px] border-transparent pb-3 px-1 min-w-fit group hover:border-primary/30 transition-colors" to="/dashboard">
-                  <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">chat</span>
-                  <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Mensajes</span>
-                </Link>
-                <Link className="flex items-center gap-2 border-b-[3px] border-primary pb-3 px-1 min-w-fit" to="/appointments">
-                  <span className="material-symbols-outlined text-primary text-[20px]">schedule</span>
-                  <span className="text-text-main dark:text-white text-sm font-bold">Citas</span>
-                </Link>
-                <Link className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors group text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white" to="/doctors">
-                  <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">stethoscope</span>
-                  <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Médicos</span>
-                </Link>
-                <Link className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors group text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white" to="/settings">
-                  <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">settings</span>
-                  <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Configuración</span>
-                </Link>
-              </div>
-            </div>
-            {/* Appointments Overview / Filters */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {/* Card 1: Total Citas */}
-              <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors cursor-default">
-                <div className="flex items-center justify-between">
-                  <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
-                    <span className="material-symbols-outlined">event</span>
-                  </div>
-                  {/* TODO: Make dynamic */}
-                  <span className="text-[#078830] bg-[#078830]/10 px-2 py-0.5 rounded-full text-xs font-bold">+15%</span>
-                </div>
+          {appointmentsLoading ? (
+            renderLoadingState()
+          ) : filteredAppointments.length === 0 ? (
+            renderEmptyState()
+          ) : (
+            <div className="max-w-[1200px] mx-auto flex flex-col gap-8">
+              {/* Page Title & Primary Action */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                  <p className="text-text-secondary text-sm font-medium">Total Citas</p>
-                  <h4 className="text-2xl font-bold text-text-main dark:text-white mt-1">{allAppointments.length}</h4>
+                  <h3 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">Gestión de Citas</h3>
+                  <p className="text-text-secondary mt-1">Aquí puedes ver y gestionar todas las citas de tu clínica.</p>
+                </div>
+                <button
+                  onClick={handleNewAppointment}
+                  className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-text-main font-bold px-5 h-11 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95 w-full sm:w-auto"
+                >
+                  <span className="material-symbols-outlined text-[20px]">add</span>
+                  <span>Nueva Cita</span>
+                </button>
+              </div>
+              {/* Tabs Navigation */}
+              <div className="border-b border-[#d0e7e5] dark:border-[#2a3c3b]">
+                <div className="flex gap-6 sm:gap-8 overflow-x-auto no-scrollbar">
+                  <Link className="flex items-center gap-2 border-b-[3px] border-transparent pb-3 px-1 min-w-fit group hover:border-primary/30 transition-colors" to="/dashboard">
+                    <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">chat</span>
+                    <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Mensajes</span>
+                  </Link>
+                  <Link className="flex items-center gap-2 border-b-[3px] border-primary pb-3 px-1 min-w-fit" to="/appointments">
+                    <span className="material-symbols-outlined text-primary text-[20px]">schedule</span>
+                    <span className="text-text-main dark:text-white text-sm font-bold">Citas</span>
+                  </Link>
+                  <Link className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors group text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white" to="/doctors">
+                    <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">stethoscope</span>
+                    <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Médicos</span>
+                  </Link>
+                  <Link className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors group text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white" to="/settings">
+                    <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">settings</span>
+                    <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Configuración</span>
+                  </Link>
                 </div>
               </div>
-              {/* Card 2: Citas Confirmadas */}
-              <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors cursor-default">
-                <div className="flex items-center justify-between">
-                  <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
-                    <span className="material-symbols-outlined">check_circle</span>
+              {/* Appointments Overview / Filters */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Card 1: Total Citas */}
+                <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors cursor-default">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
+                      <span className="material-symbols-outlined">event</span>
+                    </div>
+                    {/* TODO: Make dynamic */}
+                    <span className="text-[#078830] bg-[#078830]/10 px-2 py-0.5 rounded-full text-xs font-bold">+15%</span>
                   </div>
-                  {/* TODO: Make dynamic */}
-                  <span className="text-[#078830] bg-[#078830]/10 px-2 py-0.5 rounded-full text-xs font-bold">+8%</span>
-                </div>
-                <div>
-                  <p className="text-text-secondary text-sm font-medium">Confirmadas</p>
-                  <h4 className="text-2xl font-bold text-text-main dark:text-white mt-1">{allAppointments.filter(app => app.status === 'Confirmada').length}</h4>
-                </div>
-              </div>
-              {/* Card 3: Citas Pendientes */}
-              <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors cursor-default">
-                <div className="flex items-center justify-between">
-                  <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
-                    <span className="material-symbols-outlined">pending_actions</span>
+                  <div>
+                    <p className="text-text-secondary text-sm font-medium">Total Citas</p>
+                    <h4 className="text-2xl font-bold text-text-main dark:text-white mt-1">{allAppointments.length}</h4>
                   </div>
-                  {/* TODO: Make dynamic */}
-                  <span className="text-[#ff9800] bg-[#ff9800]/10 px-2 py-0.5 rounded-full text-xs font-bold">-2%</span>
                 </div>
-                <div>
-                  <p className="text-text-secondary text-sm font-medium">Pendientes</p>
-                  <h4 className="text-2xl font-bold text-text-main dark:text-white mt-1">{allAppointments.filter(app => app.status === 'Pendiente').length}</h4>
-                </div>
-              </div>
-              {/* Card 4: Citas Canceladas */}
-              <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors cursor-default">
-                <div className="flex items-center justify-between">
-                  <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
-                    <span className="material-symbols-outlined">cancel</span>
+                {/* Card 2: Citas Confirmadas */}
+                <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors cursor-default">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
+                      <span className="material-symbols-outlined">check_circle</span>
+                    </div>
+                    {/* TODO: Make dynamic */}
+                    <span className="text-[#078830] bg-[#078830]/10 px-2 py-0.5 rounded-full text-xs font-bold">+8%</span>
                   </div>
-                  {/* TODO: Make dynamic */}
-                  <span className="text-[#f44336] bg-[#f44336]/10 px-2 py-0.5 rounded-full text-xs font-bold">+1%</span>
+                  <div>
+                    <p className="text-text-secondary text-sm font-medium">Confirmadas</p>
+                    <h4 className="text-2xl font-bold text-text-main dark:text-white mt-1">{allAppointments.filter(app => app.status === 'Confirmada').length}</h4>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-text-secondary text-sm font-medium">Canceladas</p>
-                  <h4 className="text-2xl font-bold text-text-main dark:text-white mt-1">{allAppointments.filter(app => app.status === 'Cancelada').length}</h4>
+                {/* Card 3: Citas Pendientes */}
+                <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors cursor-default">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
+                      <span className="material-symbols-outlined">pending_actions</span>
+                    </div>
+                    {/* TODO: Make dynamic */}
+                    <span className="text-[#ff9800] bg-[#ff9800]/10 px-2 py-0.5 rounded-full text-xs font-bold">-2%</span>
+                  </div>
+                  <div>
+                    <p className="text-text-secondary text-sm font-medium">Pendientes</p>
+                    <h4 className="text-2xl font-bold text-text-main dark:text-white mt-1">{allAppointments.filter(app => app.status === 'Pendiente').length}</h4>
+                  </div>
+                </div>
+                {/* Card 4: Citas Canceladas */}
+                <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors cursor-default">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
+                      <span className="material-symbols-outlined">cancel</span>
+                    </div>
+                    {/* TODO: Make dynamic */}
+                    <span className="text-[#f44336] bg-[#f44336]/10 px-2 py-0.5 rounded-full text-xs font-bold">+1%</span>
+                  </div>
+                  <div>
+                    <p className="text-text-secondary text-sm font-medium">Canceladas</p>
+                    <h4 className="text-2xl font-bold text-text-main dark:text-white mt-1">{allAppointments.filter(app => app.status === 'Cancelada').length}</h4>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Appointments List */}
-            <div className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col overflow-hidden">
-              <div className="p-5 border-b border-[#e7f3f2] dark:border-[#2a3c3b] flex justify-between items-center bg-[#fafdfd] dark:bg-white/5">
-                <h3 className="text-lg font-bold text-text-main dark:text-white">Todas las Citas</h3>
-                <div className="flex items-center gap-2">
-                  <select
-                    className="bg-transparent border border-[#e7f3f2] dark:border-[#2a3c3b] rounded-md px-3 py-1 text-sm text-text-main dark:text-white focus:outline-none focus:ring-1 focus:ring-primary"
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value as any)}
-                  >
-                    <option value="all">Todos los estados</option>
-                    <option value="Confirmada">Confirmada</option>
-                    <option value="Pendiente">Pendiente</option>
-                    <option value="Primera vez">Primera vez</option>
-                    <option value="Cancelada">Cancelada</option>
-                  </select>
-                  <button className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md">
-                    <span className="material-symbols-outlined text-text-secondary text-[20px]">filter_list</span>
-                  </button>
+              {/* Appointments List */}
+              <div className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col overflow-hidden">
+                <div className="p-5 border-b border-[#e7f3f2] dark:border-[#2a3c3b] flex justify-between items-center bg-[#fafdfd] dark:bg-white/5">
+                  <h3 className="text-lg font-bold text-text-main dark:text-white">Todas las Citas</h3>
+                  <div className="flex items-center gap-2">
+                    <select
+                      className="bg-transparent border border-[#e7f3f2] dark:border-[#2a3c3b] rounded-md px-3 py-1 text-sm text-text-main dark:text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value as any)}
+                    >
+                      <option value="all">Todos los estados</option>
+                      <option value="Confirmada">Confirmada</option>
+                      <option value="Pendiente">Pendiente</option>
+                      <option value="Primera vez">Primera vez</option>
+                      <option value="Cancelada">Cancelada</option>
+                    </select>
+                    <button className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md">
+                      <span className="material-symbols-outlined text-text-secondary text-[20px]">filter_list</span>
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <div className="divide-y divide-[#f0f7f6] dark:divide-[#2a3c3b]">
-                {filteredAppointments.length === 0 ? (
-                  <div className="p-4 text-center text-text-secondary">No hay citas que coincidan con los filtros.</div>
-                ) : (
-                  filteredAppointments.map((appointment) => (
+                <div className="divide-y divide-[#f0f7f6] dark:divide-[#2a3c3b]">
+                  {filteredAppointments.map((appointment) => (
                     <div key={appointment.id} className="p-4 hover:bg-[#f8fcfb] dark:hover:bg-white/5 transition-colors cursor-pointer flex gap-4 items-center" onClick={() => handleViewAppointmentDetails(appointment.id)}>
                       <div className="flex flex-col items-center bg-white dark:bg-black/20 rounded-lg p-2 min-w-[50px] shadow-sm">
                         <span className="text-xs font-bold text-primary-dark uppercase">{appointment.date.split(' ')[0]}</span>
@@ -390,11 +511,11 @@ const Appointments = () => {
                         <span className="material-symbols-outlined text-[20px]">arrow_forward_ios</span>
                       </button>
                     </div>
-                  ))
-                )}
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </main>
       </div>
     </div>
