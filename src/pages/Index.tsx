@@ -8,15 +8,8 @@ const Index = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isLoading) {
-      if (user) {
-        navigate("/dashboard");
-      } else {
-        // Si no está logueado y no está en login/register/landing, redirigir a landing
-        if (window.location.pathname !== '/login' && window.location.pathname !== '/register' && window.location.pathname !== '/landing') {
-          navigate("/landing");
-        }
-      }
+    if (!isLoading && user) {
+      navigate("/dashboard");
     }
   }, [user, isLoading, navigate]);
 
@@ -28,14 +21,14 @@ const Index = () => {
     );
   }
 
-  // Este componente no debería renderizarse si la redirección funciona,
-  // pero como fallback o para usuarios no autenticados en la ruta raíz.
+  // Este contenido se mostrará brevemente si el usuario no está autenticado
+  // antes de que SessionContextProvider lo redirija a /landing.
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
+        <h1 className="text-4xl font-bold mb-4">Redirigiendo...</h1>
         <p className="text-xl text-gray-600">
-          Start building your amazing project here!
+          Por favor espera.
         </p>
       </div>
       <MadeWithDyad />

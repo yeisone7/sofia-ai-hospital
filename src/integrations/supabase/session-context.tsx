@@ -25,21 +25,21 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
         setIsLoading(false);
 
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          // Redirigir a la página principal si el usuario está autenticado
-          if (currentSession && window.location.pathname === '/login') {
-            navigate('/');
+          // Redirigir a la página principal si el usuario está autenticado y viene de una página de auth/landing
+          if (currentSession && (window.location.pathname === '/login' || window.location.pathname === '/register' || window.location.pathname === '/landing')) {
+            navigate('/dashboard');
           }
         } else if (event === 'SIGNED_OUT') {
-          // Redirigir a la página de login si el usuario no está autenticado
-          if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-            navigate('/login');
+          // Redirigir a la página de landing si el usuario no está autenticado
+          if (window.location.pathname !== '/login' && window.location.pathname !== '/register' && window.location.pathname !== '/landing') {
+            navigate('/landing');
           }
         } else if (event === 'INITIAL_SESSION') {
           // Manejar la sesión inicial
-          if (!currentSession && window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-            navigate('/login');
-          } else if (currentSession && (window.location.pathname === '/login' || window.location.pathname === '/register')) {
-            navigate('/');
+          if (!currentSession && window.location.pathname !== '/login' && window.location.pathname !== '/register' && window.location.pathname !== '/landing') {
+            navigate('/landing'); // Redirigir a landing si no hay sesión y no está en una página de auth/landing
+          } else if (currentSession && (window.location.pathname === '/login' || window.location.pathname === '/register' || window.location.pathname === '/landing')) {
+            navigate('/dashboard'); // Redirigir a dashboard si hay sesión y está en una página de auth/landing
           }
         }
       }
@@ -50,10 +50,10 @@ export const SessionContextProvider: React.FC<{ children: React.ReactNode }> = (
       setSession(session);
       setUser(session?.user || null);
       setIsLoading(false);
-      if (!session && window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-        navigate('/login');
-      } else if (session && (window.location.pathname === '/login' || window.location.pathname === '/register')) {
-        navigate('/');
+      if (!session && window.location.pathname !== '/login' && window.location.pathname !== '/register' && window.location.pathname !== '/landing') {
+        navigate('/landing'); // Redirigir a landing si no hay sesión y no está en una página de auth/landing
+      } else if (session && (window.location.pathname === '/login' || window.location.pathname === '/register' || window.location.pathname === '/landing')) {
+        navigate('/dashboard'); // Redirigir a dashboard si hay sesión y está en una página de auth/landing
       }
     });
 
