@@ -38,26 +38,24 @@ const LandingPage = () => {
       setIsLoading(true);
       setIsError(false);
       try {
-        // TODO: Para una integración real, necesitarás una política RLS en 'clinic_settings'
-        // que permita a los usuarios NO AUTENTICADOS leer los campos públicos de la clínica.
-        // Por ejemplo: CREATE POLICY "Public read for landing page" ON public.clinic_settings FOR SELECT USING (true);
-        // Y luego podrías buscar una configuración global, por ejemplo, con un ID fijo o la primera que encuentres.
-        // const { data, error } = await supabase
-        //   .from('clinic_settings')
-        //   .select('*')
-        //   .eq('id', 'GLOBAL_CLINIC_ID') // Usar un ID fijo para la configuración global
-        //   .single();
+        // Fetch the first clinic settings available. In a multi-tenant app,
+        // you might need a specific ID or a way to identify the public clinic.
+        const { data, error } = await supabase
+          .from('clinic_settings')
+          .select('*')
+          .limit(1) // Get the first available clinic settings
+          .single();
 
-        // if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
-        //   throw error;
-        // }
+        if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+          throw error;
+        }
 
-        // if (data) {
-        //   setClinicSettings(data as ClinicSettings);
-        // } else {
-          // Si no hay configuración o la llamada a Supabase está deshabilitada, usar valores por defecto
+        if (data) {
+          setClinicSettings(data as ClinicSettings);
+        } else {
+          // If no configuration found, use default placeholder values
           setClinicSettings({
-            id: '1', // Placeholder ID
+            id: 'default-clinic-id', // Placeholder ID
             clinic_name: 'Laura AI Clinic',
             clinic_address: '123 Main St, City, Country',
             clinic_phone: '+1234567890',
@@ -76,7 +74,7 @@ const LandingPage = () => {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           });
-        // }
+        }
       } catch (err: any) {
         console.error('Error fetching clinic settings:', err);
         showError('Error al cargar la configuración de la clínica.');
@@ -90,7 +88,6 @@ const LandingPage = () => {
   }, []);
 
   const handleStartChat = () => {
-    // TODO: Usar clinicSettings.whatsapp_webhook_url para construir el enlace de WhatsApp
     const whatsappUrl = clinicSettings?.whatsapp_webhook_url || 'https://wa.me/';
     window.open(whatsappUrl, '_blank');
   };
@@ -137,7 +134,7 @@ const LandingPage = () => {
               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/20 text-primary-dark">
                 <span className="material-symbols-outlined text-primary dark:text-primary">smart_toy</span>
               </div>
-              <h2 className="text-xl font-bold tracking-tight text-text-main dark:text-white">Laura AI</h2>
+              <h2 className="text-xl font-bold tracking-tight text-text-main dark:text-white">{clinicSettings?.clinic_name || 'Laura AI'}</h2>
             </div>
             <div className="hidden md:flex flex-1 justify-center gap-8">
               <a className="text-sm font-medium text-gray-600 hover:text-primary dark:text-gray-300 dark:hover:text-primary transition-colors" onClick={handleViewHours}>Cómo funciona</a>
@@ -364,7 +361,7 @@ const LandingPage = () => {
             <div className="flex flex-col items-center md:items-start gap-4">
               <div className="flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary text-2xl">smart_toy</span>
-                <span className="text-lg font-bold text-text-main dark:text-white">Laura AI</span>
+                <span className="text-lg font-bold text-text-main dark:text-white">{clinicSettings?.clinic_name || 'Laura AI'}</span>
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 text-center md:text-left max-w-sm">
                 Simplificando la conexión entre pacientes y clínicas mediante inteligencia artificial.
@@ -377,7 +374,7 @@ const LandingPage = () => {
             </div>
           </div>
           <div className="pt-8 border-t border-gray-200 dark:border-gray-800 text-center flex flex-col justify-center items-center gap-4">
-            <p className="text-sm text-gray-500">© 2024 Laura AI Inc. Todos los derechos reservados.</p>
+            <p className="text-sm text-gray-500">© 2024 {clinicSettings?.clinic_name || 'Laura AI'} Inc. Todos los derechos reservados.</p>
           </div>
         </div>
       </footer>
