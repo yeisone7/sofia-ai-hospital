@@ -3,15 +3,16 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
-import DoctorDialog from '@/components/DoctorDialog'; // Import the new DoctorDialog component
+import DoctorDialog from '@/components/DoctorDialog';
+import { getInitials } from '@/lib/utils'; // Importar getInitials
 
 // Interfaces para la estructura de datos esperada
 interface Doctor {
   id: string;
   user_id?: string; // Optional, if linked to auth.users
-  avatar_url: string;
+  avatar_url: string | null; // Puede ser null
   full_name: string;
-  specialty: string; // Changed to string to allow more flexibility
+  specialty: string;
   status: boolean; // true for Activo, false for Inactivo
   created_at: string;
   updated_at: string;
@@ -174,12 +175,6 @@ const Doctors = () => {
     setCurrentPage(prev => Math.min(totalPages, prev + 1));
   };
 
-  const getInitials = (name: string) => {
-    const parts = name.split(' ');
-    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
-  };
-
   if (isSessionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
@@ -207,7 +202,7 @@ const Doctors = () => {
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
   const userRole = user?.user_metadata?.role || 'Admin';
-  const userAvatar = user?.user_metadata?.avatar_url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBKGJqOrxKC8dOGnL2B3rcuN8cbystShMdVLZ1f22GeobGXHdn17h731ohnBgSFGJzHSaFFsKSuto3ONj63pIfPpeClcp3tWAb-bclE_Hdvuy0R-QbHkMZiM6WYYc3nXNPjiDH0EMCfTWpN1A8GBrVRx2om-uuCNIMSN-DSrG8z2WZluh5jVJxmObR7BrX_OOftM87dob0SyNkuMtcrKkmQBolg7ESQ8bWASHic7KVtOqf3B-tpEFB-W_Ojbd_zMuoMOU5VqJiH_A'; // Placeholder
+  const userAvatar = user?.user_metadata?.avatar_url || null; // Ahora puede ser null
 
   const getSpecialtyBadgeClasses = (specialty: string) => {
     switch (specialty) {
@@ -390,11 +385,17 @@ const Doctors = () => {
             </button>
             <span className="font-bold text-text-main dark:text-white">Laura AI</span>
           </div>
-          <div
-            className="size-8 rounded-full bg-cover bg-center"
-            style={{ backgroundImage: `url('${userAvatar}')` }}
-            aria-label="User profile picture"
-          ></div>
+          {userAvatar ? (
+            <div
+              className="size-8 rounded-full bg-cover bg-center"
+              style={{ backgroundImage: `url('${userAvatar}')` }}
+              aria-label="User profile picture"
+            ></div>
+          ) : (
+            <div className="size-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
+              {getInitials(userName)}
+            </div>
+          )}
         </header>
         {/* Top Bar Desktop */}
         <header className="hidden lg:flex items-center justify-between px-8 py-5 border-b border-transparent">
@@ -404,7 +405,7 @@ const Doctors = () => {
               <span className="mx-2">/</span>
               <span className="text-text-main dark:text-primary font-medium">Médicos</span>
             </nav>
-            <h2 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">Gestión de Personal</h2>
+            <h2 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">Gestión de Médicos</h2>
           </div>
           <div className="flex items-center gap-4">
             <button className="relative p-2 text-text-secondary hover:text-primary transition-colors rounded-full hover:bg-primary/10">
@@ -417,8 +418,8 @@ const Doctors = () => {
             </Link>
           </div>
         </header>
-        {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto px-4 md:px-8 pb-10">
+        {/* Scrollable Main Content */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
           {doctorsLoading ? (
             renderLoadingState()
           ) : allDoctors.length === 0 && !searchQuery ? (
@@ -460,11 +461,8 @@ const Doctors = () => {
                   <table className="w-full text-left border-collapse">
                     <thead>
                       <tr className="border-b border-border-light dark:border-border-dark bg-slate-50/50 dark:bg-white/5">
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-16">
-                          Avatar
-                        </th>
                         <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          Nombre Completo
+                          Médico
                         </th>
                         <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                           Especialidad
@@ -480,7 +478,7 @@ const Doctors = () => {
                     <tbody className="divide-y divide-border-light dark:divide-border-dark">
                       {filteredDoctors.length === 0 ? (
                         <tr>
-                          <td colSpan={5} className="px-6 py-4 text-center text-text-secondary">
+                          <td colSpan={4} className="px-6 py-4 text-center text-text-secondary">
                             No se encontraron médicos que coincidan con la búsqueda.
                           </td>
                         </tr>
@@ -488,29 +486,18 @@ const Doctors = () => {
                         filteredDoctors.map((doctor) => (
                           <tr key={doctor.id} className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                             <td className="px-6 py-4 whitespace-nowrap">
-                              {doctor.avatar_url ? (
-                                <img
-                                  src={doctor.avatar_url}
-                                  alt={doctor.full_name}
-                                  className="size-10 rounded-full object-cover border border-border-light dark:border-border-dark"
-                                  onError={(e) => {
-                                    e.currentTarget.style.display = 'none'; // Hide broken image
-                                    const parent = e.currentTarget.parentElement;
-                                    if (parent) {
-                                      parent.innerHTML = `<div class="size-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">${getInitials(doctor.full_name)}</div>`;
-                                    }
-                                  }}
-                                />
-                              ) : (
-                                <div className="size-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
-                                  {getInitials(doctor.full_name)}
+                              <div className="flex items-center gap-3">
+                                {doctor.avatar_url ? (
+                                  <img src={doctor.avatar_url} alt={doctor.full_name} className="size-10 rounded-full object-cover" />
+                                ) : (
+                                  <div className="size-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                                    {getInitials(doctor.full_name)}
+                                  </div>
+                                )}
+                                <div className="flex flex-col">
+                                  <span className="text-sm font-bold text-slate-900 dark:text-white">{doctor.full_name}</span>
+                                  <span className="text-xs text-slate-500 dark:text-slate-400">ID: {doctor.id.substring(0, 8)}...</span>
                                 </div>
-                              )}
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex flex-col">
-                                <span className="text-sm font-bold text-slate-900 dark:text-white">{doctor.full_name}</span>
-                                <span className="text-xs text-slate-500 dark:text-slate-400">ID: {doctor.id}</span>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
@@ -519,21 +506,15 @@ const Doctors = () => {
                               </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <label className="inline-flex items-center cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  className="sr-only peer"
-                                  checked={doctor.status}
-                                  onChange={() => handleToggleStatus(doctor)}
-                                />
-                                <div className="relative w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
-                                <span className={`ml-3 text-sm font-medium ${doctor.status ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}`}>
-                                  {doctor.status ? 'Activo' : 'Inactivo'}
-                                </span>
-                              </label>
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${doctor.status ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
+                                {doctor.status ? 'Activo' : 'Inactivo'}
+                              </span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right">
                               <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => handleToggleStatus(doctor)} className="p-2 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title={doctor.status ? 'Desactivar' : 'Activar'}>
+                                  <span className="material-symbols-outlined text-[20px]">{doctor.status ? 'toggle_on' : 'toggle_off'}</span>
+                                </button>
                                 <button onClick={() => handleEditDoctor(doctor)} className="p-2 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Editar">
                                   <span className="material-symbols-outlined text-[20px]">edit</span>
                                 </button>
@@ -574,13 +555,13 @@ const Doctors = () => {
             </div>
           )}
         </main>
+      </div>
       <DoctorDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         onSave={handleSaveDoctor}
         doctor={editingDoctor}
       />
-    </div>
     </div>
   );
 };

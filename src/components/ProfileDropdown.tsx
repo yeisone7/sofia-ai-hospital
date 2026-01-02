@@ -11,12 +11,13 @@ import {
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
+import { getInitials } from '@/lib/utils'; // Importar getInitials
 
 interface ProfileDropdownProps {
   userName: string;
   userRole: string;
   userEmail: string;
-  userAvatar: string;
+  userAvatar: string | null; // Puede ser null
 }
 
 const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ userName, userRole, userEmail, userAvatar }) => {
@@ -27,12 +28,6 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ userName, userRole, u
     } else {
       showSuccess('Sesión cerrada correctamente.');
     }
-  };
-
-  const getInitials = (name: string) => {
-    const parts = name.split(' ');
-    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
   };
 
   return (
@@ -46,7 +41,7 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ userName, userRole, u
               aria-label="Retrato profesional de una doctora sonriendo"
             ></div>
           ) : (
-            <div className="size-9 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+            <div className="size-9 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
               {getInitials(userName)}
             </div>
           )}

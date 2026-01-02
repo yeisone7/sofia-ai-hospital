@@ -3,6 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
+import { getInitials } from '@/lib/utils'; // Importar getInitials
 
 interface Patient {
   id: string;
@@ -222,6 +223,9 @@ const Patients = () => {
     </div>
   );
 
+  const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
+  const userAvatar = user?.user_metadata?.avatar_url || null; // Ahora puede ser null
+
   return (
     <div className="bg-background-light dark:bg-background-dark text-text-main h-screen overflow-hidden flex">
       {/* Side Navigation Bar */}
@@ -296,12 +300,17 @@ const Patients = () => {
             </button>
             <span className="font-bold text-text-main dark:text-white">Laura AI</span>
           </div>
-          {/* User Profile Placeholder */}
-          <div
-            className="size-8 rounded-full bg-cover bg-center"
-            style={{ backgroundImage: `url('${user?.user_metadata?.avatar_url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBKGJqOrxKC8dOGnL2B3rcuN8cbystShMdVLZ1f22GeobGXHdn17h731ohnBgSFGJzHSaFFsKSuto3ONj63pIfPpeClcp3tWAb-bclE_Hdvuy0R-QbHkMZiM6WYYc3nXNPjiDH0EMCfTWpN1A8GBrVRx2om-uuCNIMSN-DSrG8z2WZluh5jVJxmObR7BrX_OOftM87dob0SyNkuMtcrKkmQBolg7ESQ8bWASHic7KVtOqf3B-tpEFB-W_Ojbd_zMuoMOU5VqJiH_A'}')` }}
-            aria-label="User profile picture"
-          ></div>
+          {userAvatar ? (
+            <div
+              className="size-8 rounded-full bg-cover bg-center"
+              style={{ backgroundImage: `url('${userAvatar}')` }}
+              aria-label="User profile picture"
+            ></div>
+          ) : (
+            <div className="size-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
+              {getInitials(userName)}
+            </div>
+          )}
         </header>
         {/* Top Bar Desktop */}
         <header className="hidden lg:flex items-center justify-between px-8 py-5 border-b border-transparent">

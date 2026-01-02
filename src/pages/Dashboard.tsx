@@ -3,7 +3,8 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
-import ProfileDropdown from '@/components/ProfileDropdown'; // Import the new ProfileDropdown component
+import ProfileDropdown from '@/components/ProfileDropdown';
+import { getInitials } from '@/lib/utils'; // Importar getInitials
 
 // Interfaces para la estructura de datos esperada
 interface Message {
@@ -170,12 +171,6 @@ const Dashboard = () => {
     }
   };
 
-  const getInitials = (name: string) => {
-    const parts = name.split(' ');
-    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
-  };
-
   if (isSessionLoading || dashboardLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
@@ -204,7 +199,7 @@ const Dashboard = () => {
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
   const userRole = user?.user_metadata?.role || 'Admin';
   const userEmail = user?.email || '';
-  const userAvatar = user?.user_metadata?.avatar_url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBKGJqOrxKC8dOGnL2B3rcuN8cbystShMdVLZ1f22GeobGXHdn17h731ohnBgSFGJzHSaFFsKSuto3ONj63pIfPpeClcp3tWAb-bclE_Hdvuy0R-QbHkMZiM6WYYc3nXNPjiDH0EMCfTWpN1A8GBrVRx2om-uuCNIMSN-DSrG8z2WZluh5jVJxmObR7BrX_OOftM87dob0SyNkuMtcrKkmQBolg7ESQ8bWASHic7KVtOqf3B-tpEFB-W_Ojbd_zMuoMOU5VqJiH_A'; // Placeholder
+  const userAvatar = user?.user_metadata?.avatar_url || null; // Ahora puede ser null
 
   return (
     <div className="bg-background-light dark:bg-background-dark text-text-main h-screen overflow-hidden flex">

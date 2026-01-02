@@ -3,6 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
+import { getInitials } from '@/lib/utils'; // Importar getInitials
 
 // Interfaces para la estructura de datos esperada
 interface Conversation {
@@ -65,7 +66,7 @@ const Messages = () => {
     try {
       // Placeholder data
       const dummyConversations: Conversation[] = [
-        { id: 'conv1', participantName: 'María González', participantAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAOS6Dsw080tA4PGE4aC6QMCLRjikPujnDSLOqtqvKS6iMKEtOZgqRhXQQan2K6yebAyAMPBffTX3xKS7No6Hwfk5e3CYf7_kK1j6CNe1c4o1XyMUmpRliJVxTCoW6_q13r3T6xKStIvZRpaYwlshBVMbMzxSUECSvs2Qj1RCh8-DmztdiUsU9x07YKnqD_yfg8VmIV-kzTuIjRx5nxwzcoMCM8x7LbOVU-7cQ4oIt49j09_LBO-aLyB_o3lZ8XnX8vwnBK2eUj58Y', lastMessageContent: 'Hola, quisiera confirmar mi cita...', lastMessageTimestamp: '10:42 AM', unreadCount: 1 },
+        { id: 'conv1', participantName: 'María González', participantAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAOS6Dsw080tA4PGE4aC6QMCLRjikPujnDSLOqtqvKS6iMKEtOZgqRhXQQan2K6yebAyAMPBffTX3xKS7No6Hwfk5e3CYf7_kK1j6CNe1c4o1XyMUmpRliJVxTCoW6_q13r3T6xKStIvZRpaYwlshBVMbMzxSUECSvs2Qj1RCh8-DmztdiUsU9x07YKnqD_yfg8VmIV-kzTuIjRx5nxwzcoMCM8x7LbOVU-7cQ4o1XyMUmpRliJVxTCoW6_q13r3T6xKStIvZRpaYwlshBVMbMzxSUECSvs2Qj1RCh8-DmztdiUsU9x07YKnqD_yfg8VmIV-kzTuIjRx5nxwzcoMCM8x7LbOVU-7cQ4oIt49j09_LBO-aLyB_o3lZ8XnX8vwnBK2eUj58Y', lastMessageContent: 'Hola, quisiera confirmar mi cita...', lastMessageTimestamp: '10:42 AM', unreadCount: 1 },
         { id: 'conv2', participantName: 'Carlos Rodriguez', participantAvatarUrl: '', lastMessageContent: '¿Tienen disponibilidad para hoy?', lastMessageTimestamp: '09:15 AM', unreadCount: 0 },
         { id: 'conv3', participantName: 'Javier Méndez', participantAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDYLpEj0Yew8nNxSSAmPR4hWNZw8EETw_yykqKxEdXZy09BjlJcwMMp-WF64pcNAdjZCH1JhHou1xV7ndKd2TGy3uTjS2sLHOTdh6g0IwYz1C0f-pgl0D2B5uDY5QFIxRl5A1dnZcCn7kp9F2tbDY0pisCE0pAoItLGDqZo4_YuJWDewfYXkb3n3dA0OgPPyRK1Os5EvHS6Mets-vxQ3CLgY4IfFEJxJ6BubOtEDAH5q1_eR0NiZol1gA5eCcBkYwRsPMgSxoqRTNA', lastMessageContent: 'Gracias, nos vemos entonces.', lastMessageTimestamp: 'Ayer', unreadCount: 0 },
         { id: 'conv4', participantName: 'Luisa Perez', participantAvatarUrl: '', lastMessageContent: 'Necesito cancelar mi cita...', lastMessageTimestamp: 'Ayer', unreadCount: 0 },
@@ -139,12 +140,6 @@ const Messages = () => {
     }
   };
 
-  const getInitials = (name: string) => {
-    const parts = name.split(' ');
-    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
-    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
-  };
-
   const filteredConversations = conversations.filter(conv =>
     conv.participantName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     conv.lastMessageContent.toLowerCase().includes(searchQuery.toLowerCase())
@@ -179,7 +174,7 @@ const Messages = () => {
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
   const userRole = user?.user_metadata?.role || 'Admin';
-  const userAvatar = user?.user_metadata?.avatar_url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBKGJqOrxKC8dOGnL2B3rcuN8cbystShMdVLZ1f22GeobGXHdn17h731ohnBgSFGJzHSaFFsKSuto3ONj63pIfPpeClcp3tWAb-bclE_Hdvuy0R-QbHkMZiM6WYYc3nXNPjiDH0EMCfTWpN1A8GBrVRx2om-uuCNIMSN-DSrG8z2WZluh5jVJxmObR7BrX_OOftM87dob0SyNkuMtcrKkmQBolg7ESQ8bWASHic7KVtOqf3B-tpEFB-W_Ojbd_zMuoMOU5VqJiH_A'; // Placeholder
+  const userAvatar = user?.user_metadata?.avatar_url || null; // Ahora puede ser null
 
   const renderConversationsLoadingState = () => (
     <div className="flex flex-col gap-3 p-4 animate-pulse">
@@ -332,11 +327,17 @@ const Messages = () => {
             </button>
             {/* Profile */}
             <div className="flex items-center gap-3 cursor-pointer p-1 pr-2 rounded-full hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors border border-transparent hover:border-[#e7f3f2]">
-              <div
-                className="size-9 rounded-full bg-cover bg-center border border-[#e7f3f2]"
-                style={{ backgroundImage: `url('${userAvatar}')` }}
-                aria-label="Retrato profesional de una doctora sonriendo"
-              ></div>
+              {userAvatar ? (
+                <div
+                  className="size-9 rounded-full bg-cover bg-center border border-[#e7f3f2]"
+                  style={{ backgroundImage: `url('${userAvatar}')` }}
+                  aria-label="Retrato profesional de una doctora sonriendo"
+                ></div>
+              ) : (
+                <div className="size-9 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
+                  {getInitials(userName)}
+                </div>
+              )}
               <div className="hidden xl:flex flex-col items-start mr-1">
                 <span className="text-sm font-bold text-text-main dark:text-white leading-none">{userName}</span>
                 <span className="text-[10px] text-text-secondary font-medium mt-1">{userRole}</span>

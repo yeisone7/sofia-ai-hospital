@@ -3,6 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
+import { getInitials } from '@/lib/utils'; // Importar getInitials
 
 const Profile = () => {
   const { user, isLoading: isSessionLoading } = useSession();
@@ -18,6 +19,7 @@ const Profile = () => {
   const [profileLoading, setProfileLoading] = useState(true);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null); // State for the selected file
 
   useEffect(() => {
     if (!isSessionLoading && !user) {
@@ -47,6 +49,7 @@ const Profile = () => {
         email: user?.email || '',
         avatarUrl: data?.avatar_url || user?.user_metadata?.avatar_url || '',
       });
+      setAvatarFile(null); // Clear file input on fetch
 
     } catch (error: any) {
       console.error('Error fetching profile data:', error);
@@ -57,32 +60,61 @@ const Profile = () => {
     }
   };
 
+  const handleAvatarUpload = async (file: File) => {
+    if (!user) return '';
+
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${user.id}-${Date.now()}.${fileExtension}`;
+    const filePath = `user_avatars/${fileName}`;
+
+    const { data, error: uploadError } = await supabase.storage
+      .from('avatars') // Este bucket debe existir en Supabase Storage
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true, // Sobreescribir si ya existe
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data: publicUrlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
+    return publicUrlData.publicUrl;
+  };
+
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     setProfileError(null);
     try {
-      const { error } = await supabase
+      let newAvatarUrl = profileData.avatarUrl;
+      if (avatarFile) {
+        newAvatarUrl = await handleAvatarUpload(avatarFile);
+      }
+
+      const { error: profileError } = await supabase
         .from('profiles')
         .upsert({
           id: user?.id,
           first_name: profileData.firstName,
           last_name: profileData.lastName,
-          avatar_url: profileData.avatarUrl, // Assuming avatar_url is handled separately or directly set
+          avatar_url: newAvatarUrl,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'id' });
 
-      if (error) throw error;
+      if (profileError) throw profileError;
 
       // Also update auth.users metadata if needed
       await supabase.auth.updateUser({
         data: {
           first_name: profileData.firstName,
           last_name: profileData.lastName,
-          avatar_url: profileData.avatarUrl,
+          avatar_url: newAvatarUrl,
         },
       });
 
+      setProfileData(prev => ({ ...prev, avatarUrl: newAvatarUrl }));
+      setAvatarFile(null); // Clear file input after successful upload
       showSuccess('Perfil actualizado correctamente.');
     } catch (error: any) {
       console.error('Error saving profile:', error);
@@ -90,6 +122,21 @@ const Profile = () => {
       showError('Error al guardar el perfil: ' + error.message);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setAvatarFile(e.target.files[0]);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setProfileData(prev => ({ ...prev, avatarUrl: reader.result as string }));
+      };
+      reader.readAsDataURL(e.target.files[0]);
+    } else {
+      setAvatarFile(null);
+      // Revert to original avatar if file selection is cancelled
+      fetchProfileData();
     }
   };
 
@@ -103,7 +150,7 @@ const Profile = () => {
   };
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
-  const userAvatar = user?.user_metadata?.avatar_url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBKGJqOrxKC8dOGnL2B3rcuN8cbystShMdVLZ1f22GeobGXHdn17h731ohnBgSFGJzHSaFFsKSuto3ONj63pIfPpeClcp3tWAb-bclE_Hdvuy0R-QbHkMZiM6WYYc3nXNPjiDH0EMCfTWpN1A8GBrVRx2om-uuCNIMSN-DSrG8z2WZluh5jVJxmObR7BrX_OOftM87dob0SyNkuMtcrKkmQBolg7ESQ8bWASHic7KVtOqf3B-tpEFB-W_Ojbd_zMuoMOU5VqJiH_A'; // Placeholder
+  const userAvatar = profileData.avatarUrl || null; // Usar el avatar del estado local
 
   if (profileLoading) {
     return (
@@ -204,11 +251,17 @@ const Profile = () => {
             </button>
             <span className="font-bold text-text-main dark:text-white">Laura AI</span>
           </div>
-          <div
-            className="size-8 rounded-full bg-cover bg-center"
-            style={{ backgroundImage: `url('${userAvatar}')` }}
-            aria-label="User profile picture"
-          ></div>
+          {userAvatar ? (
+            <div
+              className="size-8 rounded-full bg-cover bg-center"
+              style={{ backgroundImage: `url('${userAvatar}')` }}
+              aria-label="User profile picture"
+            ></div>
+          ) : (
+            <div className="size-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
+              {getInitials(userName)}
+            </div>
+          )}
         </header>
         {/* Top Bar Desktop */}
         <header className="hidden lg:flex items-center justify-between px-8 py-5 border-b border-transparent">
@@ -279,7 +332,28 @@ const Profile = () => {
                       disabled
                     />
                   </label>
-                  {/* Avatar upload can be added here if needed */}
+                  {/* Avatar upload */}
+                  <div className="md:col-span-2 flex flex-col gap-3 items-center md:items-start">
+                    <span className="text-sm font-medium text-text-main dark:text-gray-300">Foto de Perfil</span>
+                    <label className="relative group w-24 h-24 rounded-full bg-background-light dark:bg-slate-800 border-2 border-dashed border-border-color dark:border-slate-600 flex items-center justify-center cursor-pointer overflow-hidden transition-all hover:border-primary">
+                      {profileData.avatarUrl ? (
+                        <img
+                          src={profileData.avatarUrl}
+                          alt="Avatar Preview"
+                          className="absolute inset-0 w-full h-full object-cover opacity-100 group-hover:opacity-40 transition-opacity"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 w-full h-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-2xl">
+                          {getInitials(profileData.firstName + ' ' + profileData.lastName)}
+                        </div>
+                      )}
+                      <div className="z-10 flex flex-col items-center text-text-secondary group-hover:text-primary-dark transition-colors">
+                        <span className="material-symbols-outlined">cloud_upload</span>
+                        <span className="text-xs font-medium mt-1">Cambiar</span>
+                      </div>
+                      <input className="hidden" type="file" onChange={handleFileChange} accept="image/*" />
+                    </label>
+                  </div>
                 </div>
               </div>
               <div className="fixed bottom-0 right-0 w-full lg:w-[calc(100%-18rem)] z-20 bg-surface-light/90 dark:bg-surface-dark/90 backdrop-blur-md border-t border-border-color dark:border-slate-800 p-4 md:px-12">
