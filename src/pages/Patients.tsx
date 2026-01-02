@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
-import { getInitials } from '@/lib/utils'; // Importar getInitials
+// import { getInitials } from '@/lib/utils'; // Eliminado
 
 interface Patient {
   id: string;
@@ -227,7 +227,7 @@ const Patients = () => {
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
   const userRole = user?.user_metadata?.role || 'Admin';
-  const userAvatar = user?.user_metadata?.avatar_url || null; // Ahora puede ser null
+  const userAvatar = user?.user_metadata?.avatar_url || null;
 
   return (
     <div className="bg-background-light dark:bg-background-dark text-text-main h-screen overflow-hidden flex">
@@ -317,7 +317,7 @@ const Patients = () => {
             ></div>
           ) : (
             <div className="size-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
-              {getInitials(userName)}
+              {/* getInitials(userName) */}
             </div>
           )}
         </header>

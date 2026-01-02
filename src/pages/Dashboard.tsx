@@ -4,7 +4,7 @@ import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
 import ProfileDropdown from '@/components/ProfileDropdown';
-import { getInitials } from '@/lib/utils';
+import { getInitials } from '@/lib/utils'; // Importado
 
 // Interfaces para la estructura de datos esperada
 interface Message {
@@ -68,7 +68,7 @@ const Dashboard = () => {
       const unreadMessagesCount = messagesData?.filter(msg => msg.sender === 'user' && !msg.read).length || 0;
 
       const enrichedMessages = await Promise.all(
-        messagesData.map(async (msg) => {
+        messagesData.map(async (msg: Message) => { // Tipado explícito para msg
           const { data: patientData } = await supabase
             .from('patients')
             .select('first_name, last_name')

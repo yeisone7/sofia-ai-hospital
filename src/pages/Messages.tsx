@@ -76,7 +76,7 @@ const Messages = () => {
       const enrichedConversations = await Promise.all(
         data.map(async (conv) => {
           // Try to get patient name from patients table
-          const { data: patientData, error: patientError } = await supabase
+          const { data: patientData, error: _patientError } = await supabase // Renombrado a _patientError
             .from('patients')
             .select('first_name, last_name')
             .eq('phone', conv.phone_number)

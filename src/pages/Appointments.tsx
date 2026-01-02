@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
@@ -148,16 +148,16 @@ const Appointments = () => {
     }
   };
 
-  const handleRescheduleAppointment = async (_appointmentId: string) => { // Renombrado a _appointmentId
+  const handleRescheduleAppointment = async (appointmentId: string) => {
     showSuccess('Funcionalidad de reprogramación en desarrollo.');
   };
 
-  const handleChangeDoctor = async (_appointmentId: string) => { // Renombrado a _appointmentId
+  const handleChangeDoctor = async (appointmentId: string) => {
     showSuccess('Funcionalidad de cambio de médico en desarrollo.');
   };
 
-  const handleViewAppointmentDetails = (_appointmentId: string) => { // Renombrado a _appointmentId
-    showSuccess(`Ver detalles de la cita ${_appointmentId} en desarrollo.`);
+  const handleViewAppointmentDetails = (appointmentId: string) => {
+    showSuccess(`Ver detalles de la cita ${appointmentId} en desarrollo.`);
   };
 
   const totalPages = Math.ceil(allAppointments.length / appointmentsPerPage);
@@ -194,7 +194,6 @@ const Appointments = () => {
   }
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
-  const _userRole = user?.user_metadata?.role || 'Admin'; // Renombrado a _userRole
   const userAvatar = user?.user_metadata?.avatar_url || null;
 
   const getStatusBadgeClasses = (status: Appointment['status']) => {
@@ -455,9 +454,9 @@ const Appointments = () => {
             <nav className="flex text-sm text-text-secondary mb-1">
               <Link className="hover:text-text-main dark:hover:text-white cursor-pointer" to="/dashboard">Panel</Link>
               <span className="mx-2">/</span>
-              <span className="text-text-main dark:text-primary font-medium">Citas</span>
+              <span className="text-text-main dark:text-primary font-medium">Pacientes</span>
             </nav>
-            <h2 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">Gestión de Citas</h2>
+            <h2 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">Gestión de Pacientes</h2>
           </div>
           <div className="flex items-center gap-4">
             <button className="relative p-2 text-text-secondary hover:text-primary transition-colors rounded-full hover:bg-primary/10">
@@ -471,84 +470,42 @@ const Appointments = () => {
           </div>
         </header>
         {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto p-4 md:px-8 pb-10">
-          {appointmentsLoading ? (
+        <main className="flex-1 overflow-y-auto px-4 md:px-8 pb-10">
+          {patientsLoading ? (
             renderLoadingState()
-          ) : allAppointments.length === 0 && !searchQuery && filterStatus === 'all' ? (
+          ) : allPatients.length === 0 && !searchQuery ? (
             renderEmptyState()
           ) : (
-            <div className="max-w-[1200px] mx-auto flex flex-col gap-8">
-              {/* Page Title & Primary Action */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h3 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">Gestión de Citas</h3>
-                  <p className="text-text-secondary mt-1">Aquí puedes ver y gestionar todas las citas de tu clínica.</p>
+            <div className="max-w-6xl mx-auto flex flex-col gap-6 mt-4">
+              {/* Action Bar */}
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="relative group w-full md:max-w-md">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 group-focus-within:text-primary transition-colors">search</span>
+                  </div>
+                  <input
+                    className="block w-full pl-10 pr-3 py-2.5 border-none rounded-xl bg-white dark:bg-surface-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/50 shadow-sm text-sm transition-all"
+                    placeholder="Buscar por nombre, email o teléfono..."
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  />
                 </div>
-                <button
-                  onClick={() => showSuccess('Funcionalidad "Nueva Cita" en desarrollo.')}
-                  className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-text-main font-bold px-5 h-11 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95 w-full sm:w-auto"
-                >
-                  <span className="material-symbols-outlined text-[20px]">add</span>
-                  <span>Nueva Cita</span>
-                </button>
-              </div>
-              {/* Tabs Navigation */}
-              <div className="border-b border-[#d0e7e5] dark:border-[#2a3c3b]">
-                <div className="flex gap-6 sm:gap-8 overflow-x-auto no-scrollbar">
-                  <button
-                    onClick={() => setFilterStatus('all')}
-                    className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 min-w-fit ${filterStatus === 'all' ? 'border-primary' : 'border-transparent group hover:border-primary/30 transition-colors'}`}
-                  >
-                    <span className={`material-symbols-outlined ${filterStatus === 'all' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>event_note</span>
-                    <span className={`text-sm font-bold ${filterStatus === 'all' ? 'text-text-main dark:text-white' : 'text-text-secondary group-hover:text-primary dark:text-gray-400'}`}>Todas</span>
+                <div className="flex items-center gap-3">
+                  <button className="hidden md:flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-surface-dark text-slate-700 dark:text-slate-200 text-sm font-bold border border-transparent hover:border-border-light dark:hover:border-border-dark shadow-sm hover:shadow transition-all">
+                    <span className="material-symbols-outlined text-[20px]">filter_list</span>
+                    <span>Filtros</span>
                   </button>
-                  <button
-                    onClick={() => setFilterStatus('pending')}
-                    className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 min-w-fit ${filterStatus === 'pending' ? 'border-primary' : 'border-transparent group hover:border-primary/30 transition-colors'}`}
-                  >
-                    <span className={`material-symbols-outlined ${filterStatus === 'pending' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>pending</span>
-                    <span className={`text-sm font-bold ${filterStatus === 'pending' ? 'text-text-main dark:text-white' : 'text-text-secondary group-hover:text-primary dark:text-gray-400'}`}>Pendientes</span>
-                  </button>
-                  <button
-                    onClick={() => setFilterStatus('confirmed')}
-                    className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 min-w-fit ${filterStatus === 'confirmed' ? 'border-primary' : 'border-transparent group hover:border-primary/30 transition-colors'}`}
-                  >
-                    <span className={`material-symbols-outlined ${filterStatus === 'confirmed' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>check_circle</span>
-                    <span className={`text-sm font-bold ${filterStatus === 'confirmed' ? 'text-text-main dark:text-white' : 'text-text-secondary group-hover:text-primary dark:text-gray-400'}`}>Confirmadas</span>
-                  </button>
-                  <button
-                    onClick={() => setFilterStatus('cancelled')}
-                    className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 min-w-fit ${filterStatus === 'cancelled' ? 'border-primary' : 'border-transparent group hover:border-primary/30 transition-colors'}`}
-                  >
-                    <span className={`material-symbols-outlined ${filterStatus === 'cancelled' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>cancel</span>
-                    <span className={`text-sm font-bold ${filterStatus === 'cancelled' ? 'text-text-main dark:text-white' : 'text-text-secondary group-hover:text-primary dark:text-gray-400'}`}>Canceladas</span>
-                  </button>
-                  <button
-                    onClick={() => setFilterStatus('rescheduled')}
-                    className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 min-w-fit ${filterStatus === 'rescheduled' ? 'border-primary' : 'border-transparent group hover:border-primary/30 transition-colors'}`}
-                  >
-                    <span className={`material-symbols-outlined ${filterStatus === 'rescheduled' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>update</span>
-                    <span className={`text-sm font-bold ${filterStatus === 'rescheduled' ? 'text-text-main dark:text-white' : 'text-text-secondary group-hover:text-primary dark:text-gray-400'}`}>Reprogramadas</span>
+                  <button onClick={handleAddPatient} className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-teal-950 text-sm font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all transform active:scale-95">
+                    <span className="material-symbols-outlined text-[20px]">add</span>
+                    <span>Agregar Paciente</span>
                   </button>
                 </div>
               </div>
-              {/* Search Bar */}
-              <div className="relative group w-full max-w-md">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 group-focus-within:text-primary transition-colors">search</span>
-                </div>
-                <input
-                  className="block w-full pl-10 pr-3 py-2.5 border-none rounded-xl bg-white dark:bg-surface-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/50 shadow-sm text-sm transition-all"
-                  placeholder="Buscar por paciente, tipo de cita o teléfono..."
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                />
-              </div>
-              {/* Appointments Table Card */}
+              {/* Patients Table Card */}
               <div className="bg-surface-light dark:bg-surface-dark rounded-2xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden flex flex-col">
                 {/* Table Wrapper */}
                 <div className="overflow-x-auto">
@@ -556,19 +513,13 @@ const Appointments = () => {
                     <thead>
                       <tr className="border-b border-border-light dark:border-border-dark bg-slate-50/50 dark:bg-white/5">
                         <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          Paciente
+                          Nombre Completo
                         </th>
                         <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          Fecha y Hora
+                          Contacto
                         </th>
                         <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          Tipo de Cita
-                        </th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          Médico
-                        </th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          Estado
+                          Fecha de Nacimiento
                         </th>
                         <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
                           Acciones
@@ -576,80 +527,37 @@ const Appointments = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border-light dark:divide-border-dark">
-                      {filteredAppointments.length === 0 ? (
+                      {filteredPatients.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="px-6 py-4 text-center text-text-secondary">
-                            No se encontraron citas que coincidan con la búsqueda o los filtros.
+                          <td colSpan={4} className="px-6 py-4 text-center text-text-secondary">
+                            No se encontraron pacientes que coincidan con la búsqueda.
                           </td>
                         </tr>
                       ) : (
-                        filteredAppointments.map((appointment) => (
-                          <tr key={appointment.id} className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                        filteredPatients.map((patient) => (
+                          <tr key={patient.id} className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex flex-col">
-                                <span className="text-sm font-bold text-slate-900 dark:text-white">{appointment.patient_name}</span>
-                                <span className="text-xs text-slate-500 dark:text-slate-400">{appointment.phone_number}</span>
+                                <span className="text-sm font-bold text-slate-900 dark:text-white">{patient.first_name} {patient.last_name}</span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400">ID: {patient.id.substring(0, 8)}...</span>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex flex-col">
-                                <span className="text-sm text-slate-700 dark:text-white">{new Date(appointment.appointment_date).toLocaleDateString()}</span>
-                                <span className="text-xs text-slate-500 dark:text-slate-400">{new Date(appointment.appointment_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                <span className="text-sm text-slate-700 dark:text-white">{patient.email}</span>
+                                <span className="text-xs text-slate-500 dark:text-slate-400">{patient.phone}</span>
                               </div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="text-sm text-slate-700 dark:text-white">{appointment.appointment_type}</span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className="text-sm text-slate-700 dark:text-white">{getDoctorName(appointment.doctor_id)}</span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusBadgeClasses(appointment.status)}`}>
-                                {getStatusText(appointment.status)}
-                              </span>
+                              <span className="text-sm text-slate-700 dark:text-white">{patient.date_of_birth}</span>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right">
                               <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                {appointment.status === 'pending' && (
-                                  <button
-                                    onClick={() => handleConfirmAppointment(appointment.id)}
-                                    className="p-2 text-slate-500 hover:text-green-600 hover:bg-green-100 dark:hover:bg-green-900/30 rounded-lg transition-colors"
-                                    title="Confirmar Cita"
-                                  >
-                                    <span className="material-symbols-outlined text-[20px]">check_circle</span>
-                                  </button>
-                                )}
-                                {appointment.status !== 'cancelled' && (
-                                  <>
-                                    <button
-                                      onClick={() => handleRescheduleAppointment(appointment.id)}
-                                      className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                                      title="Reprogramar Cita"
-                                    >
-                                      <span className="material-symbols-outlined text-[20px]">edit_calendar</span>
-                                    </button>
-                                    <button
-                                      onClick={() => handleChangeDoctor(appointment.id)}
-                                      className="p-2 text-slate-500 hover:text-purple-600 hover:bg-purple-100 dark:hover:bg-purple-900/30 rounded-lg transition-colors"
-                                      title="Cambiar Médico"
-                                    >
-                                      <span className="material-symbols-outlined text-[20px]">stethoscope</span>
-                                    </button>
-                                    <button
-                                      onClick={() => handleCancelAppointment(appointment.id)}
-                                      className="p-2 text-slate-500 hover:text-red-500 hover:bg-hover-red-light-bg dark:hover:bg-hover-red-dark-bg rounded-lg transition-colors"
-                                      title="Cancelar Cita"
-                                    >
-                                      <span className="material-symbols-outlined text-[20px]">cancel</span>
-                                    </button>
-                                  </>
-                                )}
-                                <button
-                                  onClick={() => handleViewAppointmentDetails(appointment.id)}
-                                  className="p-2 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
-                                  title="Ver Detalles"
-                                >
-                                  <span className="material-symbols-outlined text-[20px]">visibility</span>
+                                <button onClick={() => handleEditPatient(patient.id)} className="p-2 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Editar">
+                                  <span className="material-symbols-outlined text-[20px]">edit</span>
+                                </button>
+                                <button onClick={() => handleDeletePatient(patient.id)} className="p-2 text-slate-500 hover:text-red-500 hover:bg-hover-red-light-bg dark:hover:bg-hover-red-dark-bg rounded-lg transition-colors" title="Eliminar">
+                                  <span className="material-symbols-outlined text-[20px]">delete</span>
                                 </button>
                               </div>
                             </td>
@@ -662,7 +570,7 @@ const Appointments = () => {
                 {/* Pagination */}
                 <div className="px-6 py-4 border-t border-border-light dark:border-border-dark flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
                   <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Mostrando <span className="font-bold text-slate-900 dark:text-white">{(currentPage - 1) * appointmentsPerPage + 1}-{Math.min(currentPage * appointmentsPerPage, allAppointments.length)}</span> de <span className="font-bold text-slate-900 dark:text-white">{allAppointments.length}</span> resultados
+                    Mostrando <span className="font-bold text-slate-900 dark:text-white">{(currentPage - 1) * patientsPerPage + 1}-{Math.min(currentPage * patientsPerPage, allPatients.length)}</span> de <span className="font-bold text-slate-900 dark:text-white">{allPatients.length}</span> resultados
                   </p>
                   <div className="flex gap-2">
                     <button
@@ -690,4 +598,4 @@ const Appointments = () => {
   );
 };
 
-export default Appointments;
+export default Patients;

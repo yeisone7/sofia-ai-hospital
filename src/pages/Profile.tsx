@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
-import { getInitials } from '@/lib/utils'; // Importar getInitials
+import { getInitials } from '@/lib/utils'; // Mantenido, ya que sí se usa en el JSX
 
 const Profile = () => {
   const { user, isLoading: isSessionLoading } = useSession();
@@ -69,7 +69,7 @@ const Profile = () => {
     const fileName = `${user.id}-${Date.now()}.${fileExtension}`;
     const filePath = `user_avatars/${fileName}`;
 
-    const { data, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage // Eliminado 'data'
       .from('avatars') // Este bucket debe existir en Supabase Storage
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -352,7 +352,7 @@ const Profile = () => {
                           className="absolute inset-0 w-full h-full object-cover opacity-100 group-hover:opacity-40 transition-opacity"
                         />
                       ) : (
-                        <div className="absolute inset-0 w-full h-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold text-2xl">
+                        <div className="absolute inset-0 w-full h-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
                           {getInitials(profileData.firstName + ' ' + profileData.lastName)}
                         </div>
                       )}
