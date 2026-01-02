@@ -140,8 +140,8 @@ const Settings = () => {
     if (!user) return null;
 
     const fileExtension = file.name.split('.').pop();
-    const fileName = `${user.id}-${Date.now()}.${fileExtension}`;
-    const filePath = `clinic_logos/${fileName}`;
+    const fileName = `${Date.now()}.${fileExtension}`;
+    const filePath = `clinic_logos/${user.id}/${fileName}`; // Updated path to include user.id as a folder
 
     const { data, error: uploadError } = await supabase.storage
       .from('clinic-logos') // This bucket needs to be created in Supabase
