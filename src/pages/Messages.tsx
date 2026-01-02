@@ -3,24 +3,25 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
-import { getInitials } from '@/lib/utils'; // Importar getInitials
+import { getInitials } from '@/lib/utils';
 
-// Interfaces para la estructura de datos esperada
 interface Conversation {
-  id: string;
-  participantName: string;
-  participantAvatarUrl?: string;
-  lastMessageContent: string;
-  lastMessageTimestamp: string;
-  unreadCount: number;
+  phone_number: string;
+  user_id: string;
+  current_step: string;
+  temp_data: any;
+  updated_at: string;
+  patient_name?: string;
 }
 
 interface ChatMessage {
   id: string;
-  senderId: string; // ID del usuario o del participante de la conversación
-  content: string;
-  timestamp: string;
-  isMine: boolean; // true si el mensaje es del usuario actual
+  user_id: string;
+  phone_number: string;
+  message_content: string;
+  sender: 'user' | 'assistant';
+  received_at: string;
+  created_at: string;
 }
 
 const Messages = () => {
@@ -30,7 +31,7 @@ const Messages = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
+  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessageContent, setNewMessageContent] = useState('');
   const [conversationsLoading, setConversationsLoading] = useState(true);
@@ -48,15 +49,14 @@ const Messages = () => {
   }, [user, isSessionLoading, navigate]);
 
   useEffect(() => {
-    if (selectedConversationId) {
-      fetchMessages(selectedConversationId);
+    if (selectedConversation) {
+      fetchMessages(selectedConversation.phone_number);
     } else {
       setMessages([]);
     }
-  }, [selectedConversationId]);
+  }, [selectedConversation]);
 
   useEffect(() => {
-    // Scroll to bottom of messages when new messages arrive or conversation changes
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
@@ -64,52 +64,36 @@ const Messages = () => {
     setConversationsLoading(true);
     setChatError(null);
     try {
-      // Placeholder data
-      const dummyConversations: Conversation[] = [
-        {
-          id: 'conv1',
-          participantName: 'María González',
-          participantAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAOS6Dsw080tA4PGE4aC6QMCLRjikPujnDSLOqtqvKS6iMKEtOZgqRhXQQan2K6yebAyAMPBffTX3xKS7No6Hwfk5e3CYf7_kK1j6CNe1c4o1XyMUmpRliJVxTCoW6_q13r3T6xKStIvZRpaYwlshBVMbMzxSUECSvs2Qj1RCh8-DmztdiUsU9x07YKnqD_yfg8VmIV-kzTuIjRx5nxwzcoMCM8x7LbOVU-7cQ4oIt49j09_LBO-aLyB_o3lZ8XnX8vwnBK2eUj58Y',
-          lastMessageContent: 'Hola, quisiera confirmar mi cita...',
-          lastMessageTimestamp: '10:42 AM',
-          unreadCount: 1
-        },
-        {
-          id: 'conv2',
-          participantName: 'Carlos Rodriguez',
-          participantAvatarUrl: '',
-          lastMessageContent: '¿Tienen disponibilidad para hoy?',
-          lastMessageTimestamp: '09:15 AM',
-          unreadCount: 0
-        },
-        {
-          id: 'conv3',
-          participantName: 'Javier Méndez',
-          participantAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDYLpEj0Yew8nNxSSAmPR4hWNZw8EETw_yykqKxEdXZy09BjlJcwMMp-WF64pcNAdjZCH1JhHou1xV7ndKd2TGy3uTjS2sLHOTdh6g0IwYz1C0f-pgl0D2B5uDY5QFIxRl5A1dnZcCn7kp9F2tbDY0pisCE0pAoItLGDqZo4_YuJWDewfYXkb3n3dA0OgPPyRK1Os5EvHS6Mets-vxQ3CLgY4IfFEJxJ6BubOtEDAH5q1_eR0NiZol1gA5eCcBkYwRsPMgSxoqRTNA',
-          lastMessageContent: 'Gracias, nos vemos entonces.',
-          lastMessageTimestamp: 'Ayer',
-          unreadCount: 0
-        },
-        {
-          id: 'conv4',
-          participantName: 'Luisa Perez',
-          participantAvatarUrl: '',
-          lastMessageContent: 'Necesito cancelar mi cita...',
-          lastMessageTimestamp: 'Ayer',
-          unreadCount: 0
-        },
-        {
-          id: 'conv5',
-          participantName: 'Dr. Ana Martínez',
-          participantAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDwHtixTzdpJCvMAVOQqZUxaPsAbVL-KpQR-e7iTOF_8aOi0vWBIPFagRfWtWc06qZf-I1EE4rpqG3OzV5svDIpihjDe0IYkkwjwdna1nKFVIegRlVrxZ87H7kfrkgn3rU2z8iGDb8yJ2fZ8vAAqaIiCJRnK9wUxYtXKIZY8Lxc-qYHApE2E5hOnN9ufqqsr_JETme0Xq-CarLnTdg80p_oaVpwxvlF5Cb3wLh1Gq8EiECrMwTYDG7qWgC2Q5SwmSbqNZsxgKCnea8',
-          lastMessageContent: 'Recordatorio de la reunión de equipo.',
-          lastMessageTimestamp: 'Hace 2 días',
-          unreadCount: 0
-        },
-      ];
-      setConversations(dummyConversations);
-      if (dummyConversations.length > 0) {
-        setSelectedConversationId(dummyConversations[0].id);
+      const { data, error } = await supabase
+        .from('conversation_state')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('updated_at', { ascending: false });
+      
+      if (error) throw error;
+      
+      // Enrich conversations with patient names
+      const enrichedConversations = await Promise.all(
+        data.map(async (conv) => {
+          // Try to get patient name from patients table
+          const { data: patientData, error: patientError } = await supabase
+            .from('patients')
+            .select('first_name, last_name')
+            .eq('phone', conv.phone_number)
+            .single();
+          
+          return {
+            ...conv,
+            patient_name: patientData 
+              ? `${patientData.first_name} ${patientData.last_name}` 
+              : conv.phone_number
+          };
+        })
+      );
+      
+      setConversations(enrichedConversations);
+      if (enrichedConversations.length > 0 && !selectedConversation) {
+        setSelectedConversation(enrichedConversations[0]);
       }
     } catch (error: any) {
       console.error('Error fetching conversations:', error);
@@ -120,42 +104,19 @@ const Messages = () => {
     }
   };
 
-  const fetchMessages = async (conversationId: string) => {
+  const fetchMessages = async (phoneNumber: string) => {
     setMessagesLoading(true);
     setChatError(null);
     try {
-      // Placeholder data
-      const dummyMessages: ChatMessage[] = [
-        {
-          id: 'msgA1',
-          senderId: 'conv1',
-          content: 'Hola, ¿cómo estás? Quería confirmar mi cita para el próximo martes a las 10 AM.',
-          timestamp: '10:40 AM',
-          isMine: false
-        },
-        {
-          id: 'msgA2',
-          senderId: user?.id || 'user',
-          content: 'Hola María, todo bien. Sí, tu cita está confirmada para el martes a las 10 AM. ¿Necesitas algo más?',
-          timestamp: '10:42 AM',
-          isMine: true
-        },
-        {
-          id: 'msgA3',
-          senderId: 'conv1',
-          content: 'Perfecto, muchas gracias. ¡Nos vemos el martes!',
-          timestamp: '10:45 AM',
-          isMine: false
-        },
-        {
-          id: 'msgA4',
-          senderId: user?.id || 'user',
-          content: 'De nada, que tengas un excelente día.',
-          timestamp: '10:46 AM',
-          isMine: true
-        },
-      ];
-      setMessages(dummyMessages);
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('user_id', user?.id)
+        .eq('phone_number', phoneNumber)
+        .order('received_at', { ascending: true });
+      
+      if (error) throw error;
+      setMessages(data || []);
     } catch (error: any) {
       console.error('Error fetching messages:', error);
       setChatError('No se pudieron cargar los mensajes.');
@@ -167,25 +128,32 @@ const Messages = () => {
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessageContent.trim() || !selectedConversationId) return;
-
-    const messageToSend: ChatMessage = {
-      id: `temp-${Date.now()}`,
-      senderId: user?.id || 'user',
-      content: newMessageContent.trim(),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      isMine: true,
-    };
-
-    setMessages((prevMessages) => [...prevMessages, messageToSend]);
-    setNewMessageContent('');
+    if (!newMessageContent.trim() || !selectedConversation) return;
 
     try {
-      showSuccess('Mensaje enviado.');
+      // In a real implementation, this would call an edge function to send the message
+      // For now, we'll just add it to the UI and show a toast
+      showSuccess('Mensaje enviado. En una implementación real, esto se enviaría a través de WhatsApp.');
+      
+      // Add to local messages for UI feedback
+      const newMessage: ChatMessage = {
+        id: `temp-${Date.now()}`,
+        user_id: user?.id || '',
+        phone_number: selectedConversation.phone_number,
+        message_content: newMessageContent.trim(),
+        sender: 'user',
+        received_at: new Date().toISOString(),
+        created_at: new Date().toISOString()
+      };
+      
+      setMessages(prev => [...prev, newMessage]);
+      setNewMessageContent('');
+      
+      // Refresh conversations to update timestamps
+      fetchConversations();
     } catch (error: any) {
       console.error('Error sending message:', error);
       showError('Error al enviar mensaje: ' + error.message);
-      setMessages((prevMessages) => prevMessages.filter(msg => msg.id !== messageToSend.id));
     }
   };
 
@@ -199,11 +167,9 @@ const Messages = () => {
   };
 
   const filteredConversations = conversations.filter(conv =>
-    conv.participantName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    conv.lastMessageContent.toLowerCase().includes(searchQuery.toLowerCase())
+    conv.patient_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    conv.phone_number.includes(searchQuery)
   );
-
-  const selectedConversation = conversations.find(conv => conv.id === selectedConversationId);
 
   if (isSessionLoading) {
     return (
@@ -232,7 +198,7 @@ const Messages = () => {
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
   const userRole = user?.user_metadata?.role || 'Admin';
-  const userAvatar = user?.user_metadata?.avatar_url || null; // Ahora puede ser null
+  const userAvatar = user?.user_metadata?.avatar_url || null;
 
   const renderConversationsLoadingState = () => (
     <div className="flex flex-col gap-3 p-4 animate-pulse">
@@ -421,7 +387,7 @@ const Messages = () => {
                 <div
                   className="size-9 rounded-full bg-cover bg-center border border-[#e7f3f2]"
                   style={{ backgroundImage: `url('${userAvatar}')` }}
-                  aria-label="Retrato profesional de una doctora sonriendo"
+                  aria-label="User profile picture"
                 ></div>
               ) : (
                 <div className="size-9 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
@@ -462,33 +428,26 @@ const Messages = () => {
               <div className="flex-1 overflow-y-auto divide-y divide-[#f0f7f6] dark:divide-[#2a3c3b]">
                 {filteredConversations.map((conv) => (
                   <div
-                    key={conv.id}
-                    className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-[#f8fcfb] dark:hover:bg-white/5 transition-colors ${selectedConversationId === conv.id ? 'bg-[#e7f3f2] dark:bg-primary/10' : ''}`}
-                    onClick={() => setSelectedConversationId(conv.id)}
+                    key={conv.phone_number}
+                    className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-[#f8fcfb] dark:hover:bg-white/5 transition-colors ${selectedConversation?.phone_number === conv.phone_number ? 'bg-[#e7f3f2] dark:bg-primary/10' : ''}`}
+                    onClick={() => setSelectedConversation(conv)}
                   >
                     <div className="relative flex-shrink-0">
-                      {conv.participantAvatarUrl ? (
-                        <div
-                          className="size-10 rounded-full bg-cover bg-center border border-border-light dark:border-border-dark"
-                          style={{ backgroundImage: `url('${conv.participantAvatarUrl}')` }}
-                          aria-label={`Foto de perfil de ${conv.participantName}`}
-                        ></div>
-                      ) : (
-                        <div className="size-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                          {getInitials(conv.participantName)}
-                        </div>
-                      )}
-                      {conv.unreadCount > 0 && (
-                        <span className="absolute top-0 right-0 size-3 bg-red-500 rounded-full border-2 border-surface-light dark:border-surface-dark"></span>
-                      )}
+                      <div className="size-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                        {getInitials(conv.patient_name || conv.phone_number)}
+                      </div>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-baseline">
-                        <h4 className="text-sm font-bold text-text-main dark:text-white truncate">{conv.participantName}</h4>
-                        <span className="text-xs text-text-secondary">{conv.lastMessageTimestamp}</span>
+                        <h4 className="text-sm font-bold text-text-main dark:text-white truncate">
+                          {conv.patient_name || conv.phone_number}
+                        </h4>
+                        <span className="text-xs text-text-secondary">
+                          {new Date(conv.updated_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
                       </div>
-                      <p className={`text-xs truncate ${conv.unreadCount > 0 ? 'text-text-main font-medium' : 'text-text-secondary'}`}>
-                        {conv.lastMessageContent}
+                      <p className="text-xs text-text-secondary truncate">
+                        {conv.current_step === 'completed' ? 'Conversación completada' : 'En progreso'}
                       </p>
                     </div>
                   </div>
@@ -503,21 +462,17 @@ const Messages = () => {
                 {/* Chat Header */}
                 <div className="p-4 border-b border-[#e7f3f2] dark:border-[#2a3c3b] flex items-center gap-3 bg-surface-light dark:bg-surface-dark">
                   <div className="relative flex-shrink-0">
-                    {selectedConversation.participantAvatarUrl ? (
-                      <div
-                        className="size-10 rounded-full bg-cover bg-center border border-border-light dark:border-border-dark"
-                        style={{ backgroundImage: `url('${selectedConversation.participantAvatarUrl}')` }}
-                        aria-label={`Foto de perfil de ${selectedConversation.participantName}`}
-                      ></div>
-                    ) : (
-                      <div className="size-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                        {getInitials(selectedConversation.participantName)}
-                      </div>
-                    )}
+                    <div className="size-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                      {getInitials(selectedConversation.patient_name || selectedConversation.phone_number)}
+                    </div>
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-lg font-bold text-text-main dark:text-white">{selectedConversation.participantName}</h3>
-                    <p className="text-xs text-text-secondary">En línea</p>
+                    <h3 className="text-lg font-bold text-text-main dark:text-white">
+                      {selectedConversation.patient_name || selectedConversation.phone_number}
+                    </h3>
+                    <p className="text-xs text-text-secondary">
+                      Última actividad: {new Date(selectedConversation.updated_at).toLocaleString()}
+                    </p>
                   </div>
                   <button className="p-2 text-text-secondary hover:bg-gray-100 dark:hover:bg-white/10 rounded-md">
                     <span className="material-symbols-outlined">more_vert</span>
@@ -531,21 +486,27 @@ const Messages = () => {
                 ) : (
                   <div className="flex-1 p-4 space-y-4 overflow-y-auto">
                     {messages.map((message) => (
-                      <div key={message.id} className={`flex ${message.isMine ? 'justify-end' : 'justify-start'}`}>
+                      <div
+                        key={message.id}
+                        className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                      >
                         <div
                           className={`max-w-[70%] p-3 rounded-lg ${
-                            message.isMine
+                            message.sender === 'user'
                               ? 'bg-primary text-primary-foreground rounded-br-none'
                               : 'bg-surface-light dark:bg-surface-dark text-text-main rounded-bl-none border border-[#e7f3f2] dark:border-[#2a3c3b]'
                           }`}
                         >
-                          <p className="text-sm">{message.content}</p>
+                          <p className="text-sm">{message.message_content}</p>
                           <span
                             className={`block text-right text-xs mt-1 ${
-                              message.isMine ? 'text-primary-foreground/80' : 'text-text-secondary'
+                              message.sender === 'user' ? 'text-primary-foreground/80' : 'text-text-secondary'
                             }`}
                           >
-                            {message.timestamp}
+                            {new Date(message.received_at).toLocaleTimeString([], {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
                           </span>
                         </div>
                       </div>
