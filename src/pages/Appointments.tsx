@@ -42,11 +42,6 @@ const Appointments = () => {
     setAppointmentsLoading(true);
     setAppointmentsError(null);
     try {
-      // TODO: Fetch all appointments from Supabase
-      // Example: const { data, error } = await supabase.from('appointments').select('*').order_by('date', { ascending: true });
-      // if (error) throw error;
-      // setAllAppointments(data);
-
       // Placeholder data
       const dummyAppointments: Appointment[] = [
         { id: 'app1', patientName: 'Sofia Lopez', service: 'Ortodoncia', time: '14:00', date: 'Oct 24', status: 'Confirmada' },
@@ -61,8 +56,6 @@ const Appointments = () => {
         { id: 'app10', patientName: 'Fernando Díaz', service: 'Limpieza', time: '09:00', date: 'Oct 28', status: 'Confirmada' },
       ];
       setAllAppointments(dummyAppointments);
-      // Para probar el estado vacío, descomenta la siguiente línea y comenta la anterior:
-      // setAllAppointments([]);
 
     } catch (error: any) {
       console.error('Error fetching appointments data:', error);
@@ -101,12 +94,10 @@ const Appointments = () => {
 
   const handleNewAppointment = () => {
     showSuccess('Funcionalidad "Nueva Cita" en desarrollo.');
-    // TODO: Implement logic for creating a new appointment
   };
 
   const handleViewAppointmentDetails = (appointmentId: string) => {
     showSuccess(`Ver detalles de la cita ${appointmentId} en desarrollo.`);
-    // TODO: Implement navigation to appointment details page
   };
 
   if (isSessionLoading || appointmentsLoading) {
@@ -355,9 +346,9 @@ const Appointments = () => {
             <nav className="flex text-sm text-text-secondary mb-1">
               <Link className="hover:text-text-main dark:hover:text-white cursor-pointer" to="/dashboard">Panel</Link>
               <span className="mx-2">/</span>
-              <span className="text-text-main dark:text-primary font-medium">Configuración</span>
+              <span className="text-text-main dark:text-primary font-medium">Citas</span>
             </nav>
-            <h2 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">Ajustes de Clínica</h2>
+            <h2 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">Gestión de Citas</h2>
           </div>
           <div className="flex items-center gap-4">
             <button className="relative p-2 text-text-secondary hover:text-primary transition-colors rounded-full hover:bg-primary/10">
@@ -370,378 +361,161 @@ const Appointments = () => {
             </Link>
           </div>
         </header>
-        {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto px-4 md:px-8 pb-10">
-          <div className="max-w-[1000px] mx-auto w-full px-6 py-8 md:px-12 md:py-10 pb-24">
-            {/* Page Header */}
-            <div className="mb-8 md:mb-10">
-              <div className="flex flex-col gap-2">
-                <h1 className="text-text-main dark:text-white text-3xl md:text-4xl font-extrabold tracking-tight">Ajustes de Clínica</h1>
-                <p className="text-text-secondary dark:text-gray-400 text-base md:text-lg">Gestiona la información pública y operativa de tu centro médico.</p>
-              </div>
-            </div>
-            {/* Form Container */}
-            <form id="settings-form" className="flex flex-col gap-8" onSubmit={handleSaveSettings}>
-              {/* Section: Basic Info */}
-              <div className="bg-surface-light dark:bg-surface-dark rounded-2xl p-6 md:p-8 shadow-sm border border-border-color/50 dark:border-slate-800">
-                <div className="flex items-center gap-3 mb-6 border-b border-border-color/50 dark:border-slate-700 pb-4">
-                  <div className="p-2 bg-primary/10 rounded-lg text-primary-dark dark:text-primary">
-                    <span className="material-symbols-outlined">id_card</span>
-                  </div>
-                  <h2 className="text-lg font-bold text-text-main dark:text-white">Información Básica</h2>
+        {/* Scrollable Main Content */}
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+          {appointmentsLoading ? (
+            renderLoadingState()
+          ) : filteredAppointments.length === 0 && !searchQuery ? (
+            renderEmptyState()
+          ) : (
+            <div className="max-w-[1200px] mx-auto flex flex-col gap-8">
+              {/* Page Title & Primary Action */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">Gestión de Citas</h3>
+                  <p className="text-text-secondary mt-1">Aquí puedes ver y gestionar todas las citas de tu clínica.</p>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-                  {/* Logo Upload */}
-                  <div className="md:col-span-3 flex flex-col gap-3 items-center md:items-start">
-                    <span className="text-sm font-medium text-text-main dark:text-gray-300">Logo de la Clínica</span>
-                    <label className="relative group w-32 h-32 rounded-full bg-background-light dark:bg-slate-800 border-2 border-dashed border-border-color dark:border-slate-600 flex items-center justify-center cursor-pointer overflow-hidden transition-all hover:border-primary">
-                      <div
-                        className="absolute inset-0 bg-cover bg-center opacity-50 group-hover:opacity-40"
-                        style={{ backgroundImage: `url('${settings.clinicInfo.logoUrl}')` }}
-                        aria-label="Default clinic logo placeholder with medical cross icon"
-                      ></div>
-                      <div className="z-10 flex flex-col items-center text-text-secondary group-hover:text-primary-dark transition-colors">
-                        <span className="material-symbols-outlined">cloud_upload</span>
-                        <span className="text-xs font-medium mt-1">Cambiar</span>
-                      </div>
-                      <input className="hidden" type="file" onChange={handleLogoUpload} accept="image/*" />
-                    </label>
-                  </div>
-                  {/* Fields */}
-                  <div className="md:col-span-9 flex flex-col gap-5">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                      <label className="flex flex-col gap-2">
-                        <span className="text-sm font-medium text-text-main dark:text-gray-300">Nombre de la clínica</span>
-                        <input
-                          className="w-full h-12 px-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow placeholder:text-text-secondary/60"
-                          placeholder="Ej. Clínica Salud Total"
-                          type="text"
-                          value={settings.clinicInfo.name}
-                          onChange={(e) => handleInputChange(e, 'clinicInfo', 'name')}
-                        />
-                      </label>
-                      <label className="flex flex-col gap-2">
-                        <span className="text-sm font-medium text-text-main dark:text-gray-300">Especialidad Principal</span>
-                        <input
-                          className="w-full h-12 px-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow placeholder:text-text-secondary/60"
-                          placeholder="Ej. Pediatría, Odontología"
-                          type="text"
-                          value={settings.clinicInfo.specialty}
-                          onChange={(e) => handleInputChange(e, 'clinicInfo', 'specialty')}
-                        />
-                      </label>
-                    </div>
-                    <label className="flex flex-col gap-2">
-                      <span className="text-sm font-medium text-text-main dark:text-gray-300">Descripción</span>
-                      <textarea
-                        className="w-full min-h-[100px] p-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow placeholder:text-text-secondary/60 resize-y"
-                        placeholder="Describe brevemente los servicios y valores de tu clínica..."
-                        value={settings.clinicInfo.description}
-                        onChange={(e) => handleInputChange(e, 'clinicInfo', 'description')}
-                      ></textarea>
-                    </label>
-                  </div>
+                <button
+                  onClick={handleNewAppointment}
+                  className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-text-main font-bold px-5 h-11 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95 w-full sm:w-auto"
+                >
+                  <span className="material-symbols-outlined text-[20px]">add</span>
+                  <span>Nueva Cita</span>
+                </button>
+              </div>
+              {/* Tabs Navigation */}
+              <div className="border-b border-[#d0e7e5] dark:border-[#2a3c3b]">
+                <div className="flex gap-6 sm:gap-8 overflow-x-auto no-scrollbar">
+                  <Link className="flex items-center gap-2 border-b-[3px] border-transparent pb-3 px-1 min-w-fit group hover:border-primary/30 transition-colors" to="/dashboard">
+                    <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">dashboard</span>
+                    <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Dashboard</span>
+                  </Link>
+                  <Link className="flex items-center gap-2 border-b-[3px] border-transparent pb-3 px-1 min-w-fit group hover:border-primary/30 transition-colors" to="/messages">
+                    <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">chat</span>
+                    <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Mensajes</span>
+                  </Link>
+                  <Link className="flex items-center gap-2 border-b-[3px] border-primary pb-3 px-1 min-w-fit" to="/appointments">
+                    <span className="material-symbols-outlined text-primary text-[20px]">schedule</span>
+                    <span className="text-text-main dark:text-white text-sm font-bold">Citas</span>
+                  </Link>
+                  <Link className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors group text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white" to="/doctors">
+                    <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">stethoscope</span>
+                    <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Médicos</span>
+                  </Link>
+                  <Link className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors group text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white" to="/settings">
+                    <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">settings</span>
+                    <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Configuración</span>
+                  </Link>
                 </div>
               </div>
-              {/* Section: Contact */}
-              <div className="bg-surface-light dark:bg-surface-dark rounded-2xl p-6 md:p-8 shadow-sm border border-border-color/50 dark:border-slate-800">
-                <div className="flex items-center gap-3 mb-6 border-b border-border-color/50 dark:border-slate-700 pb-4">
-                  <div className="p-2 bg-primary/10 rounded-lg text-primary-dark dark:text-primary">
-                    <span className="material-symbols-outlined">location_on</span>
+              {/* Appointments Overview / Filters */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Card 1: Total Citas */}
+                <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors cursor-default">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
+                      <span className="material-symbols-outlined">event</span>
+                    </div>
+                    <span className="text-[#078830] bg-[#078830]/10 px-2 py-0.5 rounded-full text-xs font-bold">+15%</span>
                   </div>
-                  <h2 className="text-lg font-bold text-text-main dark:text-white">Contacto y Ubicación</h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <label className="flex flex-col gap-2 md:col-span-2">
-                    <span className="text-sm font-medium text-text-main dark:text-gray-300">Dirección Física</span>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">map</span>
-                      <input
-                        className="w-full h-12 pl-12 pr-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow placeholder:text-text-secondary/60"
-                        type="text"
-                        value={settings.contactInfo.address}
-                        onChange={(e) => handleInputChange(e, 'contactInfo', 'address')}
-                      />
-                    </div>
-                  </label>
-                  <label className="flex flex-col gap-2">
-                    <span className="text-sm font-medium text-text-main dark:text-gray-300">Teléfono de Contacto</span>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">call</span>
-                      <input
-                        className="w-full h-12 pl-12 pr-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow placeholder:text-text-secondary/60"
-                        type="tel"
-                        value={settings.contactInfo.phone}
-                        onChange={(e) => handleInputChange(e, 'contactInfo', 'phone')}
-                      />
-                    </div>
-                  </label>
-                  <label className="flex flex-col gap-2">
-                    <span className="text-sm font-medium text-text-main dark:text-gray-300">Correo Electrónico</span>
-                    <div className="relative">
-                      <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary">mail</span>
-                      <input
-                        className="w-full h-12 pl-12 pr-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow placeholder:text-text-secondary/60"
-                        type="email"
-                        value={settings.contactInfo.email}
-                        onChange={(e) => handleInputChange(e, 'contactInfo', 'email')}
-                      />
-                    </div>
-                  </label>
-                </div>
-              </div>
-              {/* Section: Operations */}
-              <div className="bg-surface-light dark:bg-surface-dark rounded-2xl p-6 md:p-8 shadow-sm border border-border-color/50 dark:border-slate-800">
-                <div className="flex items-center gap-3 mb-6 border-b border-border-color/50 dark:border-slate-700 pb-4">
-                  <div className="p-2 bg-primary/10 rounded-lg text-primary-dark dark:text-primary">
-                    <span className="material-symbols-outlined">schedule</span>
+                  <div>
+                    <p className="text-text-secondary text-sm font-medium">Total Citas</p>
+                    <h4 className="text-2xl font-bold text-text-main dark:text-white mt-1">{allAppointments.length}</h4>
                   </div>
-                  <h2 className="text-lg font-bold text-text-main dark:text-white">Operativa y Horarios</h2>
                 </div>
-                <div className="flex flex-col gap-6">
-                  <label className="flex flex-col gap-2 max-w-md">
-                    <span className="text-sm font-medium text-text-main dark:text-gray-300">Zona Horaria</span>
-                    <div className="relative">
-                      <select
-                        className="w-full h-12 px-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow appearance-none"
-                        value={settings.operatingHours.timezone}
-                        onChange={(e) => handleInputChange(e, 'operatingHours', 'timezone')}
-                      >
-                        <option value="America/Mexico_City">(GMT-6) Ciudad de México</option>
-                        <option value="America/Bogota">(GMT-5) Bogotá</option>
-                        <option value="America/Buenos_Aires">(GMT-3) Buenos Aires</option>
-                        <option value="Europe/Madrid">(GMT+1) Madrid</option>
-                      </select>
-                      <span className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-text-secondary pointer-events-none">expand_more</span>
+                {/* Card 2: Citas Confirmadas */}
+                <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors cursor-default">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
+                      <span className="material-symbols-outlined">check_circle</span>
                     </div>
-                  </label>
-                  <div className="flex flex-col gap-4">
-                    <span className="text-sm font-medium text-text-main dark:text-gray-300">Horarios de Atención</span>
-                    {/* Schedule Row: Weekdays */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl bg-background-light dark:bg-slate-900/50 border border-border-color/50 dark:border-slate-800">
-                      <div className="w-40 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
-                        <span className="font-medium text-text-main dark:text-white">Lunes a Viernes</span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-1">
-                        <input
-                          className="h-10 px-3 rounded-md border border-border-color dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                          type="time"
-                          value={settings.operatingHours.weekdays.startTime}
-                          onChange={(e) => handleOperatingHoursTimeChange('weekdays', 'startTime', e.target.value)}
-                          disabled={!settings.operatingHours.weekdays.open}
-                        />
-                        <span className="text-text-secondary">-</span>
-                        <input
-                          className="h-10 px-3 rounded-md border border-border-color dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                          type="time"
-                          value={settings.operatingHours.weekdays.endTime}
-                          onChange={(e) => handleOperatingHoursTimeChange('weekdays', 'endTime', e.target.value)}
-                          disabled={!settings.operatingHours.weekdays.open}
-                        />
-                      </div>
-                      <div className="flex items-center">
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            className="sr-only peer"
-                            checked={settings.operatingHours.weekdays.open}
-                            onChange={(e) => handleOperatingHoursToggle('weekdays', e.target.checked)}
-                          />
-                          <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                          <span className="ml-2 text-sm text-text-secondary dark:text-gray-400">{settings.operatingHours.weekdays.open ? 'Abierto' : 'Cerrado'}</span>
-                        </label>
-                      </div>
+                    <span className="text-[#078830] bg-[#078830]/10 px-2 py-0.5 rounded-full text-xs font-bold">+8%</span>
+                  </div>
+                  <div>
+                    <p className="text-text-secondary text-sm font-medium">Confirmadas</p>
+                    <h4 className="text-2xl font-bold text-text-main dark:text-white mt-1">{allAppointments.filter(app => app.status === 'Confirmada').length}</h4>
+                  </div>
+                </div>
+                {/* Card 3: Citas Pendientes */}
+                <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors cursor-default">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
+                      <span className="material-symbols-outlined">pending_actions</span>
                     </div>
-                    {/* Schedule Row: Saturday */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl bg-background-light dark:bg-slate-900/50 border border-border-color/50 dark:border-slate-800">
-                      <div className="w-40 flex items-center gap-2">
-                        <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                        <span className="font-medium text-text-main dark:text-white">Sábados</span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-1">
-                        <input
-                          className="h-10 px-3 rounded-md border border-border-color dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                          type="time"
-                          value={settings.operatingHours.saturday.startTime}
-                          onChange={(e) => handleOperatingHoursTimeChange('saturday', 'startTime', e.target.value)}
-                          disabled={!settings.operatingHours.saturday.open}
-                        />
-                        <span className="text-text-secondary">-</span>
-                        <input
-                          className="h-10 px-3 rounded-md border border-border-color dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                          type="time"
-                          value={settings.operatingHours.saturday.endTime}
-                          onChange={(e) => handleOperatingHoursTimeChange('saturday', 'endTime', e.target.value)}
-                          disabled={!settings.operatingHours.saturday.open}
-                        />
-                      </div>
-                      <div className="flex items-center">
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            className="sr-only peer"
-                            checked={settings.operatingHours.saturday.open}
-                            onChange={(e) => handleOperatingHoursToggle('saturday', e.target.checked)}
-                          />
-                          <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                          <span className="ml-2 text-sm text-text-secondary dark:text-gray-400">{settings.operatingHours.saturday.open ? 'Abierto' : 'Cerrado'}</span>
-                        </label>
-                      </div>
+                    <span className="text-[#ff9800] bg-[#ff9800]/10 px-2 py-0.5 rounded-full text-xs font-bold">-2%</span>
+                  </div>
+                  <div>
+                    <p className="text-text-secondary text-sm font-medium">Pendientes</p>
+                    <h4 className="text-2xl font-bold text-text-main dark:text-white mt-1">{allAppointments.filter(app => app.status === 'Pendiente').length}</h4>
+                  </div>
+                </div>
+                {/* Card 4: Citas Canceladas */}
+                <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors cursor-default">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
+                      <span className="material-symbols-outlined">cancel</span>
                     </div>
-                    {/* Schedule Row: Sunday */}
-                    <div className={`flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl bg-background-light dark:bg-slate-900/50 border border-border-color/50 dark:border-slate-800 ${!settings.operatingHours.sunday.open ? 'opacity-60' : ''}`}>
-                      <div className="w-40 flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${settings.operatingHours.sunday.open ? 'bg-green-500' : 'bg-gray-400'}`}></div>
-                        <span className="font-medium text-text-main dark:text-white">Domingos</span>
-                      </div>
-                      <div className="flex items-center gap-2 flex-1">
-                        <input
-                          className="h-10 px-3 rounded-md border border-border-color dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                          type="time"
-                          value={settings.operatingHours.sunday.startTime}
-                          onChange={(e) => handleOperatingHoursTimeChange('sunday', 'startTime', e.target.value)}
-                          disabled={!settings.operatingHours.sunday.open}
-                        />
-                        <span className="text-text-secondary">-</span>
-                        <input
-                          className="h-10 px-3 rounded-md border border-border-color dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                          type="time"
-                          value={settings.operatingHours.sunday.endTime}
-                          onChange={(e) => handleOperatingHoursTimeChange('sunday', 'endTime', e.target.value)}
-                          disabled={!settings.operatingHours.sunday.open}
-                        />
-                      </div>
-                      <div className="flex items-center">
-                        <label className="relative inline-flex items-center cursor-pointer">
-                          <input
-                            type="checkbox"
-                            className="sr-only peer"
-                            checked={settings.operatingHours.sunday.open}
-                            onChange={(e) => handleOperatingHoursToggle('sunday', e.target.checked)}
-                          />
-                          <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                          <span className="ml-2 text-sm text-text-secondary dark:text-gray-400">{settings.operatingHours.sunday.open ? 'Abierto' : 'Cerrado'}</span>
-                        </label>
-                      </div>
-                    </div>
+                    <span className="text-[#f44336] bg-[#f44336]/10 px-2 py-0.5 rounded-full text-xs font-bold">+1%</span>
+                  </div>
+                  <div>
+                    <p className="text-text-secondary text-sm font-medium">Canceladas</p>
+                    <h4 className="text-2xl font-bold text-text-main dark:text-white mt-1">{allAppointments.filter(app => app.status === 'Cancelada').length}</h4>
                   </div>
                 </div>
               </div>
-              {/* Section: Services */}
-              <div className="bg-surface-light dark:bg-surface-dark rounded-2xl p-6 md:p-8 shadow-sm border border-border-color/50 dark:border-slate-800">
-                <div className="flex items-center gap-3 mb-6 border-b border-border-color/50 dark:border-slate-700 pb-4">
-                  <div className="p-2 bg-primary/10 rounded-lg text-primary-dark dark:text-primary">
-                    <span className="material-symbols-outlined">medical_services</span>
+
+              {/* Appointments List */}
+              <div className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col overflow-hidden">
+                <div className="p-5 border-b border-[#e7f3f2] dark:border-[#2a3c3b] flex justify-between items-center bg-[#fafdfd] dark:bg-white/5">
+                  <h3 className="text-lg font-bold text-text-main dark:text-white">Todas las Citas</h3>
+                  <div className="flex items-center gap-2">
+                    <select
+                      className="bg-transparent border border-[#e7f3f2] dark:border-[#2a3c3b] rounded-md px-3 py-1 text-sm text-text-main dark:text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value as any)}
+                    >
+                      <option value="all">Todos los estados</option>
+                      <option value="Confirmada">Confirmada</option>
+                      <option value="Pendiente">Pendiente</option>
+                      <option value="Primera vez">Primera vez</option>
+                      <option value="Cancelada">Cancelada</option>
+                    </select>
+                    <button className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md">
+                      <span className="material-symbols-outlined text-text-secondary text-[20px]">filter_list</span>
+                    </button>
                   </div>
-                  <h2 className="text-lg font-bold text-text-main dark:text-white">Servicios Ofrecidos</h2>
                 </div>
-                <div className="flex flex-col gap-4">
-                  <label className="flex flex-col gap-2">
-                    <span className="text-sm font-medium text-text-main dark:text-gray-300">Selecciona las especialidades para habilitar en el asistente</span>
-                    <div className="flex gap-2">
-                      <input
-                        className="flex-1 h-12 px-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow placeholder:text-text-secondary/60"
-                        placeholder="Escribe un servicio (ej. Nutrición)"
-                        type="text"
-                        value={newServiceInput}
-                        onChange={(e) => setNewServiceInput(e.target.value)}
-                      />
-                      <button
-                        type="button"
-                        onClick={handleAddService}
-                        className="h-12 px-6 rounded-lg bg-text-main dark:bg-slate-700 text-white font-medium hover:bg-opacity-90 transition-colors"
-                      >
-                        Agregar
-                      </button>
-                    </div>
-                  </label>
-                  {/* Tags Container */}
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {settings.services.map((service) => (
-                      <div key={service.id} className="flex items-center gap-2 pl-3 pr-2 py-1.5 bg-primary/20 dark:bg-primary/10 border border-primary/30 rounded-full">
-                        <span className="text-sm font-semibold text-primary-dark dark:text-primary">{service.name}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveService(service.id)}
-                          className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-primary/20 text-primary-dark dark:text-primary transition-colors"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">close</span>
+                <div className="divide-y divide-[#f0f7f6] dark:divide-[#2a3c3b]">
+                  {filteredAppointments.length === 0 ? (
+                    <div className="p-4 text-center text-text-secondary">No hay citas que coincidan con los filtros.</div>
+                  ) : (
+                    filteredAppointments.map((appointment) => (
+                      <div key={appointment.id} className="p-4 hover:bg-[#f8fcfb] dark:hover:bg-white/5 transition-colors cursor-pointer flex gap-4 items-center" onClick={() => handleViewAppointmentDetails(appointment.id)}>
+                        <div className="flex flex-col items-center bg-white dark:bg-black/20 rounded-lg p-2 min-w-[50px] shadow-sm">
+                          <span className="text-xs font-bold text-primary-dark uppercase">{appointment.date.split(' ')[0]}</span>
+                          <span className="text-xl font-bold text-text-main dark:text-white">{appointment.date.split(' ')[1]}</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-text-main dark:text-white">{appointment.patientName}</p>
+                          <p className="text-xs text-text-secondary">{appointment.service} • {appointment.time}</p>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${getStatusBadgeClasses(appointment.status)}`}>
+                          {appointment.status}
+                        </span>
+                        <button className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md text-text-secondary">
+                          <span className="material-symbols-outlined text-[20px]">arrow_forward_ios</span>
                         </button>
                       </div>
-                    ))}
-                    {/* Example of an inactive service tag */}
-                    {/* <div className="flex items-center gap-2 pl-3 pr-2 py-1.5 bg-background-light dark:bg-slate-800 border border-border-color dark:border-slate-600 rounded-full border-dashed">
-                      <span className="text-sm font-medium text-text-secondary">Laboratorio</span>
-                      <button className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 text-text-secondary transition-colors">
-                        <span className="material-symbols-outlined text-[16px]">add</span>
-                      </button>
-                    </div> */}
-                  </div>
+                    ))
+                  )}
                 </div>
               </div>
-              {/* Section: Integration */}
-              <div className="bg-surface-light dark:bg-surface-dark rounded-2xl p-6 md:p-8 shadow-sm border border-border-color/50 dark:border-slate-800">
-                <div className="flex items-center gap-3 mb-6 border-b border-border-color/50 dark:border-slate-700 pb-4">
-                  <div className="p-2 bg-primary/10 rounded-lg text-primary-dark dark:text-primary">
-                    <span className="material-symbols-outlined">webhook</span>
-                  </div>
-                  <h2 className="text-lg font-bold text-text-main dark:text-white">Integraciones</h2>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="flex flex-col gap-2">
-                    <span className="text-sm font-medium text-text-main dark:text-gray-300">Webhook de WhatsApp (Meta Business)</span>
-                    <div className="flex gap-2">
-                      <div className="relative flex-1">
-                        <input
-                          className="w-full h-12 pl-4 pr-10 rounded-lg border border-border-color dark:border-slate-700 bg-gray-50 dark:bg-slate-900 text-text-secondary font-mono text-sm focus:ring-0 outline-none"
-                          readOnly
-                          type="text"
-                          value={settings.whatsappWebhookUrl}
-                        />
-                        <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-green-500 text-[18px]">lock</span>
-                      </div>
-                      <button
-                        className="h-12 px-4 rounded-lg border border-border-color dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-gray-50 dark:hover:bg-slate-700 text-text-main dark:text-white transition-colors flex items-center gap-2"
-                        title="Copiar URL"
-                        type="button"
-                        onClick={handleCopyWebhook}
-                      >
-                        <span className="material-symbols-outlined text-[20px]">content_copy</span>
-                        <span className="hidden sm:inline text-sm font-medium">Copiar</span>
-                      </button>
-                    </div>
-                  </label>
-                  <p className="text-xs text-text-secondary mt-1">Utiliza esta URL para configurar los eventos entrantes en tu consola de Meta Developers.</p>
-                </div>
-              </div>
-            </form>
-          </div>
-          {/* Sticky Footer for Actions */}
-          <div className="fixed bottom-0 right-0 w-full lg:w-[calc(100%-18rem)] z-20 bg-surface-light/90 dark:bg-surface-dark/90 backdrop-blur-md border-t border-border-color dark:border-slate-800 p-4 md:px-12">
-            <div className="max-w-[1000px] mx-auto flex items-center justify-end gap-3">
-              <button
-                className="px-6 py-2.5 rounded-lg border border-border-color dark:border-slate-700 text-text-main dark:text-white font-semibold text-sm hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
-                type="button"
-                onClick={handleCancel}
-                disabled={isSaving}
-              >
-                Cancelar
-              </button>
-              <button
-                className="px-6 py-2.5 rounded-lg bg-primary text-text-main font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 hover:shadow-primary/30 transform hover:-translate-y-0.5 transition-all"
-                type="submit"
-                form="settings-form" // Link to the form
-                disabled={isSaving}
-              >
-                {isSaving ? 'Guardando...' : 'Guardar Cambios'}
-              </button>
             </div>
-          </div>
+          )}
         </main>
       </div>
     </div>
   );
 };
 
-export default Dashboard;
+export default Appointments;

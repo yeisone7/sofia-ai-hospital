@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom'; // Import Link and useLocation
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
@@ -27,7 +27,7 @@ interface Appointment {
 const Dashboard = () => {
   const { user, isLoading: isSessionLoading } = useSession();
   const navigate = useNavigate();
-  const location = useLocation(); // Use useLocation hook
+  const location = useLocation();
 
   const [recentMessages, setRecentMessages] = useState<Message[]>([]);
   const [upcomingAppointments, setUpcomingAppointments] = useState<Appointment[]>([]);
@@ -41,10 +41,8 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (!isSessionLoading && !user) {
-      // If session is not loading and no user, redirect to login
       navigate('/login');
     } else if (user) {
-      // User is logged in, fetch dashboard data
       fetchDashboardData();
     }
   }, [user, isSessionLoading, navigate]);
@@ -53,18 +51,14 @@ const Dashboard = () => {
     setDashboardLoading(true);
     setDashboardError(null);
     try {
-      // TODO: Fetch stats from Supabase
-      // Example: const { data: statsData, error: statsError } = await supabase.from('dashboard_stats').select('*').single();
-      // if (statsError) throw statsError;
+      // Placeholder data for stats
       setStats({
-        appointmentsToday: 24, // Placeholder
-        unreadMessages: 5,     // Placeholder
-        dailyRevenue: 1240,    // Placeholder
+        appointmentsToday: 24,
+        unreadMessages: 5,
+        dailyRevenue: 1240,
       });
 
-      // TODO: Fetch recent messages from Supabase
-      // Example: const { data: messagesData, error: messagesError } = await supabase.from('messages').select('*').limit(4).order_by('timestamp', { ascending: false });
-      // if (messagesError) throw messagesError;
+      // Placeholder data for recent messages
       setRecentMessages([
         {
           id: 'msg1',
@@ -78,7 +72,7 @@ const Dashboard = () => {
         {
           id: 'msg2',
           senderName: 'Carlos Rodriguez',
-          senderAvatarUrl: '', // No image, use initials
+          senderAvatarUrl: '',
           content: '¿Tienen disponibilidad para una limpieza dental hoy?',
           timestamp: '09:15 AM',
           read: false,
@@ -87,7 +81,7 @@ const Dashboard = () => {
         {
           id: 'msg3',
           senderName: 'Javier Méndez',
-          senderAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDYLpEj0Yew8nNxSSAmPR4hWNZw8EETw_yykqKxEdXZy09BjlJcwMMp-WF64pcNAdjZCH1JhHou1xV7ndKd2TGy3uTjS2sLHOTdh6g0IwYz1C0f-pgl0D2B5uDY5QFIxRl5A1dnZcCn7kp9F2tbDY0pisCE0pAoItLGDqZo4_YuWWDewfYXkb3n3dA0OgPPyRK1Os5EvHS6Mets-vxQ3CLgY4IfFEJxJ6BubOtEDAH5q1_eR0NiZol1gA5eCcBkYwRsPMgSxoqRTNA',
+          senderAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDYLpEj0Yew8nNxSSAmPR4hWNZw8EETw_yykqKxEdXZy09BjlJcwMMp-WF64pcNAdjZCH1JhHou1xV7ndKd2TGy3uTjS2sLHOTdh6g0IwYz1C0f-pgl0D2B5uDY5QFIxRl5A1dnZcCn7kp9F2tbDY0pisCE0pAoItLGDqZo4_YuJWDewfYXkb3n3dA0OgPPyRK1Os5EvHS6Mets-vxQ3CLgY4IfFEJxJ6BubOtEDAH5q1_eR0NiZol1gA5eCcBkYwRsPMgSxoqRTNA',
           content: 'Gracias, nos vemos entonces.',
           timestamp: 'Ayer',
           read: true,
@@ -96,7 +90,7 @@ const Dashboard = () => {
         {
           id: 'msg4',
           senderName: 'Luisa Perez',
-          senderAvatarUrl: '', // No image, use initials
+          senderAvatarUrl: '',
           content: 'Necesito cancelar mi cita por motivos personales.',
           timestamp: 'Ayer',
           read: true,
@@ -104,9 +98,7 @@ const Dashboard = () => {
         },
       ]);
 
-      // TODO: Fetch upcoming appointments from Supabase
-      // Example: const { data: appointmentsData, error: appointmentsError } = await supabase.from('appointments').select('*').order_by('date', { ascending: true }).limit(3);
-      // if (appointmentsError) throw appointmentsError;
+      // Placeholder data for upcoming appointments
       setUpcomingAppointments([
         {
           id: 'app1',
@@ -149,21 +141,18 @@ const Dashboard = () => {
       showError('Error al cerrar sesión: ' + error.message);
     } else {
       showSuccess('Sesión cerrada correctamente.');
-      // Redirection handled by SessionContextProvider
     }
   };
 
   const handleNewAppointment = () => {
-    // TODO: Implement logic for creating a new appointment
     showSuccess('Funcionalidad "Nueva Cita" en desarrollo.');
   };
 
   const handleViewAllMessages = () => {
-    navigate('/messages'); // Navigate to the new messages page
+    navigate('/messages');
   };
 
   const handleReviewAgenda = () => {
-    // TODO: Implement navigation to calendar/agenda page
     showSuccess('Funcionalidad "Revisar agenda" en desarrollo.');
   };
 
@@ -198,7 +187,6 @@ const Dashboard = () => {
     );
   }
 
-  // Assuming user is logged in and data is loaded
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
   const userRole = user?.user_metadata?.role || 'Admin';
   const userAvatar = user?.user_metadata?.avatar_url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBKGJqOrxKC8dOGnL2B3rcuN8cbystShMdVLZ1f22GeobGXHdn17h731ohnBgSFGJzHSaFFsKSuto3ONj63pIfPpeClcp3tWAb-bclE_Hdvuy0R-QbHkMZiM6WYYc3nXNPjiDH0EMCfTWpN1A8GBrVRx2om-uuCNIMSN-DSrG8z2WZluh5jVJxmObR7BrX_OOftM87dob0SyNkuMtcrKkmQBolg7ESQ8bWASHic7KVtOqf3B-tpEFB-W_Ojbd_zMuoMOU5VqJiH_A'; // Placeholder
@@ -211,7 +199,6 @@ const Dashboard = () => {
         <div className="p-6 pb-2">
           <div className="flex items-center gap-3">
             <div className="bg-primary/20 p-2 rounded-xl">
-              {/* Abstract AI/Medical Logo representation */}
               <span className="material-symbols-outlined text-primary-dark font-bold">medical_services</span>
             </div>
             <div className="flex flex-col">
@@ -369,7 +356,7 @@ const Dashboard = () => {
                   <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
                     <span className="material-symbols-outlined">event_available</span>
                   </div>
-                  <span className="text-[#078830] bg-[#078830]/10 px-2 py-0.5 rounded-full text-xs font-bold">+12%</span> {/* TODO: Make dynamic */}
+                  <span className="text-[#078830] bg-[#078830]/10 px-2 py-0.5 rounded-full text-xs font-bold">+12%</span>
                 </div>
                 <div>
                   <p className="text-text-secondary text-sm font-medium">Citas Hoy</p>
@@ -395,7 +382,7 @@ const Dashboard = () => {
                   <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
                     <span className="material-symbols-outlined">payments</span>
                   </div>
-                  <span className="text-[#078830] bg-[#078830]/10 px-2 py-0.5 rounded-full text-xs font-bold">+5%</span> {/* TODO: Make dynamic */}
+                  <span className="text-[#078830] bg-[#078830]/10 px-2 py-0.5 rounded-full text-xs font-bold">+5%</span>
                 </div>
                 <div>
                   <p className="text-text-secondary text-sm font-medium">Ingresos del día</p>
@@ -441,9 +428,8 @@ const Dashboard = () => {
                             </div>
                           )}
                           <span className="absolute -bottom-1 -right-1 flex items-center justify-center bg-white dark:bg-surface-dark rounded-full p-[2px]">
-                            {/* Whatsapp Icon simulation */}
                             <div className="bg-[#25D366] text-white rounded-full p-[2px] flex items-center justify-center">
-                              <span className="material-symbols-outlined text-[10px]">call</span> {/* Placeholder for whatsapp icon */}
+                              <span className="material-symbols-outlined text-[10px]">call</span>
                             </div>
                           </span>
                         </div>

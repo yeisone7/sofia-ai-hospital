@@ -157,36 +157,61 @@ const Settings = () => {
     showSuccess('Cambios cancelados.');
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>, section: keyof ClinicSettingsData, field: string) => {
+  // Handler para campos de texto/textarea/select dentro de objetos anidados (clinicInfo, contactInfo)
+  const handleNestedObjectInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+    section: 'clinicInfo' | 'contactInfo', // Restringido a secciones que son objetos
+    field: string
+  ) => {
     setSettings(prev => ({
       ...prev,
       [section]: {
-        ...prev[section],
+        ...prev[section], // Ahora prev[section] está garantizado de ser un objeto
         [field]: e.target.value,
       },
     }));
   };
 
-  const handleOperatingHoursToggle = (day: keyof OperatingHours, value: boolean) => {
+  // Handler específico para el campo timezone dentro de operatingHours
+  const handleOperatingHoursTimezoneChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSettings(prev => ({
+      ...prev,
+      operatingHours: {
+        ...prev.operatingHours,
+        timezone: e.target.value,
+      },
+    }));
+  };
+
+  // Handler para el toggle de apertura/cierre de días
+  const handleOperatingHoursToggle = (
+    day: 'weekdays' | 'saturday' | 'sunday', // Restringido a días que son objetos
+    value: boolean
+  ) => {
     setSettings(prev => ({
       ...prev,
       operatingHours: {
         ...prev.operatingHours,
         [day]: {
-          ...prev.operatingHours[day],
+          ...prev.operatingHours[day], // Ahora prev.operatingHours[day] está garantizado de ser un objeto
           open: value,
         },
       },
     }));
   };
 
-  const handleOperatingHoursTimeChange = (day: keyof OperatingHours, timeType: 'startTime' | 'endTime', value: string) => {
+  // Handler para los cambios de hora de inicio/fin de días
+  const handleOperatingHoursTimeChange = (
+    day: 'weekdays' | 'saturday' | 'sunday', // Restringido a días que son objetos
+    timeType: 'startTime' | 'endTime',
+    value: string
+  ) => {
     setSettings(prev => ({
       ...prev,
       operatingHours: {
         ...prev.operatingHours,
         [day]: {
-          ...prev.operatingHours[day],
+          ...prev.operatingHours[day], // Ahora prev.operatingHours[day] está garantizado de ser un objeto
           [timeType]: value,
         },
       },
@@ -398,6 +423,10 @@ const Settings = () => {
             <span className={`material-symbols-outlined ${location.pathname === '/reports' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>analytics</span>
             <p className={`text-sm font-medium ${location.pathname === '/reports' ? 'text-text-main dark:text-white' : ''}`}>Reportes</p>
           </Link>
+          <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/settings' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/settings">
+            <span className={`material-symbols-outlined ${location.pathname === '/settings' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>settings</span>
+            <p className={`text-sm font-medium ${location.pathname === '/settings' ? 'text-text-main dark:text-white' : ''}`}>Configuración</p>
+          </Link>
           <div className="mt-auto pt-4 border-t border-[#e7f3f2] dark:border-[#2a3c3b]">
             <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/help' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/help">
               <span className={`material-symbols-outlined ${location.pathname === '/help' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>help_outline</span>
@@ -464,7 +493,7 @@ const Settings = () => {
               </div>
             </div>
             {/* Form Container */}
-            <form className="flex flex-col gap-8" onSubmit={handleSaveSettings}>
+            <form id="settings-form" className="flex flex-col gap-8" onSubmit={handleSaveSettings}>
               {/* Section: Basic Info */}
               <div className="bg-surface-light dark:bg-surface-dark rounded-2xl p-6 md:p-8 shadow-sm border border-border-color/50 dark:border-slate-800">
                 <div className="flex items-center gap-3 mb-6 border-b border-border-color/50 dark:border-slate-700 pb-4">
@@ -500,7 +529,7 @@ const Settings = () => {
                           placeholder="Ej. Clínica Salud Total"
                           type="text"
                           value={settings.clinicInfo.name}
-                          onChange={(e) => handleInputChange(e, 'clinicInfo', 'name')}
+                          onChange={(e) => handleNestedObjectInputChange(e, 'clinicInfo', 'name')}
                         />
                       </label>
                       <label className="flex flex-col gap-2">
@@ -510,7 +539,7 @@ const Settings = () => {
                           placeholder="Ej. Pediatría, Odontología"
                           type="text"
                           value={settings.clinicInfo.specialty}
-                          onChange={(e) => handleInputChange(e, 'clinicInfo', 'specialty')}
+                          onChange={(e) => handleNestedObjectInputChange(e, 'clinicInfo', 'specialty')}
                         />
                       </label>
                     </div>
@@ -520,7 +549,7 @@ const Settings = () => {
                         className="w-full min-h-[100px] p-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow placeholder:text-text-secondary/60 resize-y"
                         placeholder="Describe brevemente los servicios y valores de tu clínica..."
                         value={settings.clinicInfo.description}
-                        onChange={(e) => handleInputChange(e, 'clinicInfo', 'description')}
+                        onChange={(e) => handleNestedObjectInputChange(e, 'clinicInfo', 'description')}
                       ></textarea>
                     </label>
                   </div>
@@ -543,7 +572,7 @@ const Settings = () => {
                         className="w-full h-12 pl-12 pr-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow placeholder:text-text-secondary/60"
                         type="text"
                         value={settings.contactInfo.address}
-                        onChange={(e) => handleInputChange(e, 'contactInfo', 'address')}
+                        onChange={(e) => handleNestedObjectInputChange(e, 'contactInfo', 'address')}
                       />
                     </div>
                   </label>
@@ -555,7 +584,7 @@ const Settings = () => {
                         className="w-full h-12 pl-12 pr-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow placeholder:text-text-secondary/60"
                         type="tel"
                         value={settings.contactInfo.phone}
-                        onChange={(e) => handleInputChange(e, 'contactInfo', 'phone')}
+                        onChange={(e) => handleNestedObjectInputChange(e, 'contactInfo', 'phone')}
                       />
                     </div>
                   </label>
@@ -567,7 +596,7 @@ const Settings = () => {
                         className="w-full h-12 pl-12 pr-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow placeholder:text-text-secondary/60"
                         type="email"
                         value={settings.contactInfo.email}
-                        onChange={(e) => handleInputChange(e, 'contactInfo', 'email')}
+                        onChange={(e) => handleNestedObjectInputChange(e, 'contactInfo', 'email')}
                       />
                     </div>
                   </label>
@@ -588,7 +617,7 @@ const Settings = () => {
                       <select
                         className="w-full h-12 px-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow appearance-none"
                         value={settings.operatingHours.timezone}
-                        onChange={(e) => handleInputChange(e, 'operatingHours', 'timezone')}
+                        onChange={handleOperatingHoursTimezoneChange} // Usar el nuevo handler específico
                       >
                         <option value="America/Mexico_City">(GMT-6) Ciudad de México</option>
                         <option value="America/Bogota">(GMT-5) Bogotá</option>

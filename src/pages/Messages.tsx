@@ -63,11 +63,6 @@ const Messages = () => {
     setConversationsLoading(true);
     setChatError(null);
     try {
-      // TODO: Fetch conversations from Supabase
-      // Example: const { data, error } = await supabase.from('conversations').select('*').order_by('lastMessageTimestamp', { ascending: false });
-      // if (error) throw error;
-      // setConversations(data);
-
       // Placeholder data
       const dummyConversations: Conversation[] = [
         { id: 'conv1', participantName: 'María González', participantAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAOS6Dsw080tA4PGE4aC6QMCLRjikPujnDSLOqtqvKS6iMKEtOZgqRhXQQan2K6yebAyAMPBffTX3xKS7No6Hwfk5e3CYf7_kK1j6CNe1c4o1XyMUmpRliJVxTCoW6_q13r3T6xKStIvZRpaYwlshBVMbMzxSUECSvs2Qj1RCh8-DmztdiUsU9x07YKnqD_yfg8VmIV-kzTuIjRx5nxwzcoMCM8x7LbOVU-7cQ4oIt49j09_LBO-aLyB_o3lZ8XnX8vwnBK2eUj58Y', lastMessageContent: 'Hola, quisiera confirmar mi cita...', lastMessageTimestamp: '10:42 AM', unreadCount: 1 },
@@ -80,8 +75,6 @@ const Messages = () => {
       if (dummyConversations.length > 0) {
         setSelectedConversationId(dummyConversations[0].id);
       }
-      // Para probar el estado vacío, descomenta la siguiente línea y comenta la anterior:
-      // setConversations([]);
 
     } catch (error: any) {
       console.error('Error fetching conversations:', error);
@@ -96,11 +89,6 @@ const Messages = () => {
     setMessagesLoading(true);
     setChatError(null);
     try {
-      // TODO: Fetch messages for the selected conversation from Supabase
-      // Example: const { data, error } = await supabase.from('messages').select('*').eq('conversation_id', conversationId).order_by('timestamp', { ascending: true });
-      // if (error) throw error;
-      // setMessages(data);
-
       // Placeholder data
       const dummyMessages: ChatMessage[] = [
         { id: 'msgA1', senderId: 'conv1', content: 'Hola, ¿cómo estás? Quería confirmar mi cita para el próximo martes a las 10 AM.', timestamp: '10:40 AM', isMine: false },
@@ -123,7 +111,7 @@ const Messages = () => {
     if (!newMessageContent.trim() || !selectedConversationId) return;
 
     const messageToSend: ChatMessage = {
-      id: `temp-${Date.now()}`, // Temporary ID
+      id: `temp-${Date.now()}`,
       senderId: user?.id || 'user',
       content: newMessageContent.trim(),
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -134,13 +122,10 @@ const Messages = () => {
     setNewMessageContent('');
 
     try {
-      // TODO: Send message to Supabase
-      // Example: await supabase.from('messages').insert({ conversation_id: selectedConversationId, sender_id: user.id, content: messageToSend.content });
       showSuccess('Mensaje enviado.');
     } catch (error: any) {
       console.error('Error sending message:', error);
       showError('Error al enviar mensaje: ' + error.message);
-      // Optionally, revert the message from UI if sending failed
       setMessages((prevMessages) => prevMessages.filter(msg => msg.id !== messageToSend.id));
     }
   };
@@ -226,7 +211,7 @@ const Messages = () => {
         <div key={i} className={`flex ${i % 2 === 0 ? 'justify-start' : 'justify-end'}`}>
           <div className={`max-w-[70%] p-3 rounded-lg ${i % 2 === 0 ? 'bg-gray-200 dark:bg-gray-700' : 'bg-primary/20 dark:bg-primary/30'}`}>
             <div className="h-4 w-full bg-gray-300 dark:bg-gray-600 rounded mb-1"></div>
-            <div className="h-3 w-1/2 bg-gray-300 dark:bg-gray-600 rounded"></div>
+            <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-1/2"></div>
           </div>
         </div>
       ))}
@@ -284,6 +269,10 @@ const Messages = () => {
           <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/reports' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/reports">
             <span className={`material-symbols-outlined ${location.pathname === '/reports' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>analytics</span>
             <p className={`text-sm font-medium ${location.pathname === '/reports' ? 'text-text-main dark:text-white' : ''}`}>Reportes</p>
+          </Link>
+          <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/settings' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/settings">
+            <span className={`material-symbols-outlined ${location.pathname === '/settings' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>settings</span>
+            <p className={`text-sm font-medium ${location.pathname === '/settings' ? 'text-text-main dark:text-white' : ''}`}>Configuración</p>
           </Link>
           <div className="mt-auto pt-4 border-t border-[#e7f3f2] dark:border-[#2a3c3b]">
             <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/help' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/help">
@@ -439,7 +428,7 @@ const Messages = () => {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-bold text-text-main dark:text-white">{selectedConversation.participantName}</h3>
-                    <p className="text-xs text-text-secondary">En línea</p> {/* TODO: Dynamic status */}
+                    <p className="text-xs text-text-secondary">En línea</p>
                   </div>
                   <button className="p-2 text-text-secondary hover:bg-gray-100 dark:hover:bg-white/10 rounded-md">
                     <span className="material-symbols-outlined">more_vert</span>

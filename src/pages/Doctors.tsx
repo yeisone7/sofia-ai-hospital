@@ -42,11 +42,6 @@ const Doctors = () => {
     setDoctorsLoading(true);
     setDoctorsError(null);
     try {
-      // TODO: Fetch all doctors from Supabase
-      // Example: const { data, error } = await supabase.from('doctors').select('*').order_by('fullName', { ascending: true });
-      // if (error) throw error;
-      // setAllDoctors(data);
-
       // Placeholder data
       const dummyDoctors: Doctor[] = [
         { id: 'MED-001', avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDwHtixTzdpJCvMAVOQqZUxaPsAbVL-KpQR-e7iTOF_8aOi0vWBIPFagRfWtWc06qZf-I1EE4rpqG3OzV5svDIpihjDe0IYkkwjwdna1nKFVIegRlVrxZ87H7kfrkgn3rU2z8iGDb8yJ2fZ8vAAqaIiCJRnK9wUxYtXKIZY8Lxc-qYHApE2E5hOnN9ufqqsr_JETme0Xq-CarLnTdg80p_oaVpwxvlF5Cb3wLh1Gq8EiECrMwTYDG7qWgC2Q5SwmSbqNZsxgKCnea8', fullName: 'Dr. Ana Martínez', specialty: 'Cardiología', status: true },
@@ -63,8 +58,6 @@ const Doctors = () => {
         { id: 'MED-011', avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBjXKlFPhyeBhVDUU0qd95A41TV5-0Mh4HRT1kWPZMIuyHqxCq92Iz666rXJ46S2xeWvwoGs-CJ-koYv8WG3rvx3Wzq_8sjbIJuwtQGEDO0UZbNJtu_C2EBKXIsBJKNNZ5Qjo0iViDtAisk_1h508ckj950oKaMR2eVB5XPyDf-xGMfMmNUvpJ_cuz6fAJc3yLHYWYeWh_uA09xfErXM5DpD-2_I6ts2258bn_6WsOY_TCM7AX2jWOxsBKVtGCUEfBO8pQHA_HYfg4', fullName: 'Dr. Francisco Soler', specialty: 'Neurología', status: true },
       ];
       setAllDoctors(dummyDoctors);
-      // Para probar el estado vacío, descomenta la siguiente línea y comenta la anterior:
-      // setAllDoctors([]);
 
     } catch (error: any) {
       console.error('Error fetching doctors data:', error);
@@ -102,22 +95,18 @@ const Doctors = () => {
 
   const handleAddDoctor = () => {
     showSuccess('Funcionalidad "Agregar Médico" en desarrollo.');
-    // TODO: Implement logic for adding a new doctor
   };
 
   const handleEditDoctor = (doctorId: string) => {
     showSuccess(`Funcionalidad "Editar Médico ${doctorId}" en desarrollo.`);
-    // TODO: Implement logic for editing a doctor
   };
 
   const handleDeleteDoctor = (doctorId: string) => {
     showSuccess(`Funcionalidad "Eliminar Médico ${doctorId}" en desarrollo.`);
-    // TODO: Implement logic for deleting a doctor
   };
 
   const handleToggleStatus = (doctorId: string) => {
     showSuccess(`Funcionalidad "Cambiar estado de Médico ${doctorId}" en desarrollo.`);
-    // TODO: Implement logic for toggling doctor status
   };
 
   const totalPages = Math.ceil(allDoctors.length / doctorsPerPage);
@@ -308,6 +297,10 @@ const Doctors = () => {
             <span className={`material-symbols-outlined ${location.pathname === '/reports' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>analytics</span>
             <p className={`text-sm font-medium ${location.pathname === '/reports' ? 'text-text-main dark:text-white' : ''}`}>Reportes</p>
           </Link>
+          <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/settings' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/settings">
+            <span className={`material-symbols-outlined ${location.pathname === '/settings' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>settings</span>
+            <p className={`text-sm font-medium ${location.pathname === '/settings' ? 'text-text-main dark:text-white' : ''}`}>Configuración</p>
+          </Link>
           <div className="mt-auto pt-4 border-t border-[#e7f3f2] dark:border-[#2a3c3b]">
             <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/help' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/help">
               <span className={`material-symbols-outlined ${location.pathname === '/help' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>help_outline</span>
@@ -367,7 +360,7 @@ const Doctors = () => {
         <main className="flex-1 overflow-y-auto px-4 md:px-8 pb-10">
           {doctorsLoading ? (
             renderLoadingState()
-          ) : filteredDoctors.length === 0 && !searchQuery ? ( // Only show empty state if no search query
+          ) : filteredDoctors.length === 0 && !searchQuery ? (
             renderEmptyState()
           ) : (
             <div className="max-w-6xl mx-auto flex flex-col gap-6 mt-4">
@@ -384,7 +377,7 @@ const Doctors = () => {
                     value={searchQuery}
                     onChange={(e) => {
                       setSearchQuery(e.target.value);
-                      setCurrentPage(1); // Reset pagination on search
+                      setCurrentPage(1);
                     }}
                   />
                 </div>
