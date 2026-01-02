@@ -3,16 +3,9 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
-import { getInitials } from '@/lib/utils'; // Importar getInitials
+import { getInitials } from '@/lib/utils';
 
 // Interfaces para la estructura de datos esperada
-interface ClinicInfo {
-  name: string;
-  specialty: string;
-  description: string;
-  logoUrl: string;
-}
-
 interface OperatingDayHours {
   open: boolean;
   startTime: string;
@@ -26,23 +19,20 @@ interface OperatingHours {
   sunday: OperatingDayHours;
 }
 
-interface ContactInfo {
-  address: string;
-  phone: string;
-  email: string;
-}
-
-interface Service {
-  id: string;
-  name: string;
-}
-
 interface ClinicSettingsData {
-  clinicInfo: ClinicInfo;
-  contactInfo: ContactInfo;
-  operatingHours: OperatingHours;
-  services: Service[];
-  whatsappWebhookUrl: string;
+  id?: string; // Supabase ID
+  clinic_name: string;
+  clinic_address: string | null;
+  clinic_phone: string | null;
+  clinic_email: string | null;
+  working_hours: OperatingHours;
+  services: string[]; // Array of service names
+  about_clinic: string | null;
+  whatsapp_webhook_url: string | null;
+  timezone: string | null;
+  logo_url: string | null;
+  created_at?: string;
+  updated_at?: string;
 }
 
 const Settings = () => {
@@ -51,25 +41,21 @@ const Settings = () => {
   const location = useLocation();
 
   const [settings, setSettings] = useState<ClinicSettingsData>({
-    clinicInfo: {
-      name: '',
-      specialty: '',
-      description: '',
-      logoUrl: '',
-    },
-    contactInfo: {
-      address: '',
-      phone: '',
-      email: '',
-    },
-    operatingHours: {
+    clinic_name: '',
+    clinic_address: '',
+    clinic_phone: '',
+    clinic_email: '',
+    working_hours: {
       timezone: 'America/Mexico_City',
       weekdays: { open: true, startTime: '09:00', endTime: '18:00' },
       saturday: { open: true, startTime: '09:00', endTime: '14:00' },
       sunday: { open: false, startTime: '09:00', endTime: '14:00' },
     },
     services: [],
-    whatsappWebhookUrl: 'https://api.laura.ai/v1/hooks/wa/cli_892301', // Placeholder
+    about_clinic: '',
+    whatsapp_webhook_url: `https://stojculenbcdvzggyscb.supabase.co/functions/v1/twilio-webhook-whatsapp`, // Default webhook URL
+    timezone: 'America/Mexico_City',
+    logo_url: null,
   });
 
   const [settingsLoading, setSettingsLoading] = useState(true);
@@ -77,6 +63,7 @@ const Settings = () => {
   const [settingsError, setSettingsError] = useState<string | null>(null);
   const [newServiceInput, setNewServiceInput] = useState('');
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [initialSettings, setInitialSettings] = useState<ClinicSettingsData | null>(null); // To revert changes
 
   const isAdmin = user?.user_metadata?.role === 'admin';
 
@@ -92,37 +79,54 @@ const Settings = () => {
     setSettingsLoading(true);
     setSettingsError(null);
     try {
-      // TODO: Fetch clinic settings from Supabase
-      // Example: const { data, error } = await supabase.from('clinic_settings').select('*').single();
-      // if (error) throw error;
-      // setSettings(data);
+      const { data, error } = await supabase
+        .from('clinic_settings')
+        .select('*')
+        .eq('id', user?.id) // Each user has their own clinic settings
+        .single();
 
-      // Placeholder data
-      setSettings({
-        clinicInfo: {
-          name: 'Centro Médico Vida Sana',
-          specialty: 'Medicina General',
-          description: 'Centro médico comprometido con la salud integral de las familias, ofreciendo atención personalizada y tecnología de vanguardia.',
-          logoUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBqTjqYS7bZF9UDf3Gqf4OzV3l-OK2I74o8hTRUjco_eiyyacb9QNClEqJ5OvwomIFmzJ-SwRcDNrVuYGA8ktqIowJgZqQ9vkuqJmauVmspaoDbTHcm7tZjodbPumN6sgBGxYNWX9ELn2NmPHEYJmmQ',
-        },
-        contactInfo: {
-          address: 'Av. Reforma 222, Piso 4, Ciudad de México',
-          phone: '+52 55 1234 5678',
-          email: 'contacto@vidasana.mx',
-        },
-        operatingHours: {
+      if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+        throw error;
+      }
+
+      if (data) {
+        // Ensure working_hours and services are correctly parsed/defaulted
+        const parsedSettings: ClinicSettingsData = {
+          ...data,
+          working_hours: data.working_hours || {
+            timezone: 'America/Mexico_City',
+            weekdays: { open: true, startTime: '09:00', endTime: '18:00' },
+            saturday: { open: true, startTime: '09:00', endTime: '14:00' },
+            sunday: { open: false, startTime: '09:00', endTime: '14:00' },
+          },
+          services: data.services || [],
+          whatsapp_webhook_url: data.whatsapp_webhook_url || `https://stojculenbcdvzggyscb.supabase.co/functions/v1/twilio-webhook-whatsapp`,
+        };
+        setSettings(parsedSettings);
+        setInitialSettings(parsedSettings);
+      } else {
+        // If no settings exist, initialize with defaults and the user's ID
+        const defaultSettings: ClinicSettingsData = {
+          id: user?.id,
+          clinic_name: '',
+          clinic_address: '',
+          clinic_phone: '',
+          clinic_email: '',
+          working_hours: {
+            timezone: 'America/Mexico_City',
+            weekdays: { open: true, startTime: '09:00', endTime: '18:00' },
+            saturday: { open: true, startTime: '09:00', endTime: '14:00' },
+            sunday: { open: false, startTime: '09:00', endTime: '14:00' },
+          },
+          services: [],
+          about_clinic: '',
+          whatsapp_webhook_url: `https://stojculenbcdvzggyscb.supabase.co/functions/v1/twilio-webhook-whatsapp`,
           timezone: 'America/Mexico_City',
-          weekdays: { open: true, startTime: '09:00', endTime: '18:00' },
-          saturday: { open: true, startTime: '09:00', endTime: '14:00' },
-          sunday: { open: false, startTime: '09:00', endTime: '14:00' },
-        },
-        services: [
-          { id: 's1', name: 'Medicina General' },
-          { id: 's2', name: 'Pediatría' },
-          { id: 's3', name: 'Ginecología' },
-        ],
-        whatsappWebhookUrl: 'https://api.laura.ai/v1/hooks/wa/cli_892301',
-      });
+          logo_url: null,
+        };
+        setSettings(defaultSettings);
+        setInitialSettings(defaultSettings);
+      }
     } catch (error: any) {
       console.error('Error fetching settings data:', error);
       setSettingsError('No se pudieron cargar los ajustes de la clínica.');
@@ -132,18 +136,69 @@ const Settings = () => {
     }
   };
 
+  const handleLogoUpload = async (file: File) => {
+    if (!user) return null;
+
+    const fileExtension = file.name.split('.').pop();
+    const fileName = `${user.id}-${Date.now()}.${fileExtension}`;
+    const filePath = `clinic_logos/${fileName}`;
+
+    const { data, error: uploadError } = await supabase.storage
+      .from('clinic-logos') // This bucket needs to be created in Supabase
+      .upload(filePath, file, {
+        cacheControl: '3600',
+        upsert: true,
+      });
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+    const { data: publicUrlData } = supabase.storage.from('clinic-logos').getPublicUrl(filePath);
+    return publicUrlData.publicUrl;
+  };
+
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     setSettingsError(null);
+
+    if (!user) {
+      showError('Usuario no autenticado.');
+      setIsSaving(false);
+      return;
+    }
+
     try {
-      // TODO: Upload logo to Supabase Storage if changed
-      // Example: if (logoFile) { const { data, error } = await supabase.storage.from('logos').upload(...); }
+      let newLogoUrl = settings.logo_url;
+      if (logoFile) {
+        newLogoUrl = await handleLogoUpload(logoFile);
+      }
 
-      // TODO: Update clinic settings in Supabase
-      // Example: const { error } = await supabase.from('clinic_settings').update(settings).eq('id', user.id);
-      // if (error) throw error;
+      const settingsToSave = {
+        id: user.id, // Ensure the user_id is set as the primary key
+        clinic_name: settings.clinic_name,
+        clinic_address: settings.clinic_address,
+        clinic_phone: settings.clinic_phone,
+        clinic_email: settings.clinic_email,
+        working_hours: settings.working_hours,
+        services: settings.services,
+        about_clinic: settings.about_clinic,
+        whatsapp_webhook_url: settings.whatsapp_webhook_url,
+        timezone: settings.timezone,
+        logo_url: newLogoUrl,
+        updated_at: new Date().toISOString(),
+      };
 
+      const { error } = await supabase
+        .from('clinic_settings')
+        .upsert(settingsToSave, { onConflict: 'id' });
+
+      if (error) throw error;
+
+      setSettings(prev => ({ ...prev, logo_url: newLogoUrl })); // Update local state with new URL
+      setInitialSettings(settingsToSave); // Update initial settings for revert
+      setLogoFile(null); // Clear file input after successful upload
       showSuccess('Ajustes guardados correctamente.');
     } catch (error: any) {
       console.error('Error saving settings:', error);
@@ -155,113 +210,111 @@ const Settings = () => {
   };
 
   const handleCancel = () => {
-    // Revert to initial state or refetch data
-    fetchSettingsData();
-    showSuccess('Cambios cancelados.');
+    if (initialSettings) {
+      setSettings(initialSettings);
+      setLogoFile(null); // Clear any pending file selection
+      showSuccess('Cambios cancelados.');
+    }
   };
 
-  // Handler para campos de texto/textarea/select dentro de objetos anidados (clinicInfo, contactInfo)
-  const handleNestedObjectInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-    section: 'clinicInfo' | 'contactInfo', // Restringido a secciones que son objetos
-    field: string
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
+    field: keyof ClinicSettingsData
   ) => {
     setSettings(prev => ({
       ...prev,
-      [section]: {
-        ...prev[section], // Ahora prev[section] está garantizado de ser un objeto
-        [field]: e.target.value,
-      },
+      [field]: e.target.value,
     }));
   };
 
-  // Handler específico para el campo timezone dentro de operatingHours
   const handleOperatingHoursTimezoneChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setSettings(prev => ({
       ...prev,
-      operatingHours: {
-        ...prev.operatingHours,
+      working_hours: {
+        ...prev.working_hours,
         timezone: e.target.value,
       },
     }));
   };
 
-  // Handler para el toggle de apertura/cierre de días
   const handleOperatingHoursToggle = (
-    day: 'weekdays' | 'saturday' | 'sunday', // Restringido a días que son objetos
+    day: 'weekdays' | 'saturday' | 'sunday',
     value: boolean
   ) => {
     setSettings(prev => ({
       ...prev,
-      operatingHours: {
-        ...prev.operatingHours,
+      working_hours: {
+        ...prev.working_hours,
         [day]: {
-          ...prev.operatingHours[day], // Ahora prev.operatingHours[day] está garantizado de ser un objeto
+          ...prev.working_hours[day],
           open: value,
         },
       },
     }));
   };
 
-  // Handler para los cambios de hora de inicio/fin de días
   const handleOperatingHoursTimeChange = (
-    day: 'weekdays' | 'saturday' | 'sunday', // Restringido a días que son objetos
+    day: 'weekdays' | 'saturday' | 'sunday',
     timeType: 'startTime' | 'endTime',
     value: string
   ) => {
     setSettings(prev => ({
       ...prev,
-      operatingHours: {
-        ...prev.operatingHours,
+      working_hours: {
+        ...prev.working_hours,
         [day]: {
-          ...prev.operatingHours[day], // Ahora prev.operatingHours[day] está garantizado de ser un objeto
+          ...prev.working_hours[day],
           [timeType]: value,
         },
       },
     }));
   };
 
-  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setLogoFile(file);
-      // Optionally, show a preview immediately
       const reader = new FileReader();
       reader.onloadend = () => {
         setSettings(prev => ({
           ...prev,
-          clinicInfo: {
-            ...prev.clinicInfo,
-            logoUrl: reader.result as string,
-          },
+          logo_url: reader.result as string,
         }));
       };
       reader.readAsDataURL(file);
+    } else {
+      setLogoFile(null);
+      // Revert to original logo if file selection is cancelled
+      setSettings(prev => ({ ...prev, logo_url: initialSettings?.logo_url || null }));
     }
   };
 
   const handleAddService = (e: React.FormEvent) => {
     e.preventDefault();
-    if (newServiceInput.trim() && !settings.services.some(s => s.name.toLowerCase() === newServiceInput.trim().toLowerCase())) {
+    if (newServiceInput.trim() && !settings.services.some(s => s.toLowerCase() === newServiceInput.trim().toLowerCase())) {
       setSettings(prev => ({
         ...prev,
-        services: [...prev.services, { id: `s${Date.now()}`, name: newServiceInput.trim() }],
+        services: [...prev.services, newServiceInput.trim()],
       }));
       setNewServiceInput('');
     }
   };
 
-  const handleRemoveService = (serviceId: string) => {
+  const handleRemoveService = (serviceToRemove: string) => {
     setSettings(prev => ({
       ...prev,
-      services: prev.services.filter(s => s.id !== serviceId),
+      services: prev.services.filter(s => s !== serviceToRemove),
     }));
   };
 
   const handleCopyWebhook = async () => {
     try {
-      await navigator.clipboard.writeText(settings.whatsappWebhookUrl);
-      showSuccess('URL del Webhook copiada al portapapeles.');
+      if (settings.whatsapp_webhook_url) {
+        await navigator.clipboard.writeText(settings.whatsapp_webhook_url);
+        showSuccess('URL del Webhook copiada al portapapeles.');
+      } else {
+        showError('No hay URL de webhook para copiar.');
+      }
     } catch (err) {
       showError('Error al copiar la URL.');
       console.error('Failed to copy: ', err);
@@ -279,7 +332,7 @@ const Settings = () => {
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
   const userRole = user?.user_metadata?.role || 'Admin';
-  const userAvatar = user?.user_metadata?.avatar_url || null; // Ahora puede ser null
+  const userAvatar = user?.user_metadata?.avatar_url || null;
 
   const renderLoadingState = () => (
     <div className="max-w-[1000px] mx-auto w-full px-6 py-8 md:px-12 md:py-10 pb-24 animate-pulse">
@@ -524,14 +577,14 @@ const Settings = () => {
                     <label className="relative group w-32 h-32 rounded-full bg-background-light dark:bg-slate-800 border-2 border-dashed border-border-color dark:border-slate-600 flex items-center justify-center cursor-pointer overflow-hidden transition-all hover:border-primary">
                       <div
                         className="absolute inset-0 bg-cover bg-center opacity-50 group-hover:opacity-40"
-                        style={{ backgroundImage: `url('${settings.clinicInfo.logoUrl}')` }}
+                        style={{ backgroundImage: `url('${settings.logo_url || '/placeholder.svg'}')` }}
                         aria-label="Default clinic logo placeholder with medical cross icon"
                       ></div>
                       <div className="z-10 flex flex-col items-center text-text-secondary group-hover:text-primary-dark transition-colors">
                         <span className="material-symbols-outlined">cloud_upload</span>
                         <span className="text-xs font-medium mt-1">Cambiar</span>
                       </div>
-                      <input className="hidden" type="file" onChange={handleLogoUpload} accept="image/*" />
+                      <input className="hidden" type="file" onChange={handleLogoFileChange} accept="image/*" />
                     </label>
                   </div>
                   {/* Fields */}
@@ -543,8 +596,8 @@ const Settings = () => {
                           className="w-full h-12 px-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow placeholder:text-text-secondary/60"
                           placeholder="Ej. Clínica Salud Total"
                           type="text"
-                          value={settings.clinicInfo.name}
-                          onChange={(e) => handleNestedObjectInputChange(e, 'clinicInfo', 'name')}
+                          value={settings.clinic_name}
+                          onChange={(e) => handleInputChange(e, 'clinic_name')}
                         />
                       </label>
                       <label className="flex flex-col gap-2">
@@ -553,8 +606,8 @@ const Settings = () => {
                           className="w-full h-12 px-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow placeholder:text-text-secondary/60"
                           placeholder="Ej. Pediatría, Odontología"
                           type="text"
-                          value={settings.clinicInfo.specialty}
-                          onChange={(e) => handleNestedObjectInputChange(e, 'clinicInfo', 'specialty')}
+                          value={settings.about_clinic || ''} // Using about_clinic for specialty for now
+                          onChange={(e) => handleInputChange(e, 'about_clinic')}
                         />
                       </label>
                     </div>
@@ -563,8 +616,8 @@ const Settings = () => {
                       <textarea
                         className="w-full min-h-[100px] p-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow placeholder:text-text-secondary/60 resize-y"
                         placeholder="Describe brevemente los servicios y valores de tu clínica..."
-                        value={settings.clinicInfo.description}
-                        onChange={(e) => handleNestedObjectInputChange(e, 'clinicInfo', 'description')}
+                        value={settings.about_clinic || ''}
+                        onChange={(e) => handleInputChange(e, 'about_clinic')}
                       ></textarea>
                     </label>
                   </div>
@@ -586,8 +639,8 @@ const Settings = () => {
                       <input
                         className="w-full h-12 pl-12 pr-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow placeholder:text-text-secondary/60"
                         type="text"
-                        value={settings.contactInfo.address}
-                        onChange={(e) => handleNestedObjectInputChange(e, 'contactInfo', 'address')}
+                        value={settings.clinic_address || ''}
+                        onChange={(e) => handleInputChange(e, 'clinic_address')}
                       />
                     </div>
                   </label>
@@ -598,8 +651,8 @@ const Settings = () => {
                       <input
                         className="w-full h-12 pl-12 pr-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow placeholder:text-text-secondary/60"
                         type="tel"
-                        value={settings.contactInfo.phone}
-                        onChange={(e) => handleNestedObjectInputChange(e, 'contactInfo', 'phone')}
+                        value={settings.clinic_phone || ''}
+                        onChange={(e) => handleInputChange(e, 'clinic_phone')}
                       />
                     </div>
                   </label>
@@ -610,8 +663,8 @@ const Settings = () => {
                       <input
                         className="w-full h-12 pl-12 pr-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow placeholder:text-text-secondary/60"
                         type="email"
-                        value={settings.contactInfo.email}
-                        onChange={(e) => handleNestedObjectInputChange(e, 'contactInfo', 'email')}
+                        value={settings.clinic_email || ''}
+                        onChange={(e) => handleInputChange(e, 'clinic_email')}
                       />
                     </div>
                   </label>
@@ -631,8 +684,8 @@ const Settings = () => {
                     <div className="relative">
                       <select
                         className="w-full h-12 px-4 rounded-lg border border-border-color dark:border-slate-700 bg-background-light dark:bg-slate-900 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-shadow appearance-none"
-                        value={settings.operatingHours.timezone}
-                        onChange={handleOperatingHoursTimezoneChange} // Usar el nuevo handler específico
+                        value={settings.working_hours.timezone}
+                        onChange={handleOperatingHoursTimezoneChange}
                       >
                         <option value="America/Mexico_City">(GMT-6) Ciudad de México</option>
                         <option value="America/Bogota">(GMT-5) Bogotá</option>
@@ -654,17 +707,17 @@ const Settings = () => {
                         <input
                           className="h-10 px-3 rounded-md border border-border-color dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                           type="time"
-                          value={settings.operatingHours.weekdays.startTime}
+                          value={settings.working_hours.weekdays.startTime}
                           onChange={(e) => handleOperatingHoursTimeChange('weekdays', 'startTime', e.target.value)}
-                          disabled={!settings.operatingHours.weekdays.open}
+                          disabled={!settings.working_hours.weekdays.open}
                         />
                         <span className="text-text-secondary">-</span>
                         <input
                           className="h-10 px-3 rounded-md border border-border-color dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                           type="time"
-                          value={settings.operatingHours.weekdays.endTime}
+                          value={settings.working_hours.weekdays.endTime}
                           onChange={(e) => handleOperatingHoursTimeChange('weekdays', 'endTime', e.target.value)}
-                          disabled={!settings.operatingHours.weekdays.open}
+                          disabled={!settings.working_hours.weekdays.open}
                         />
                       </div>
                       <div className="flex items-center">
@@ -672,11 +725,11 @@ const Settings = () => {
                           <input
                             type="checkbox"
                             className="sr-only peer"
-                            checked={settings.operatingHours.weekdays.open}
+                            checked={settings.working_hours.weekdays.open}
                             onChange={(e) => handleOperatingHoursToggle('weekdays', e.target.checked)}
                           />
                           <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                          <span className="ml-2 text-sm text-text-secondary dark:text-gray-400">{settings.operatingHours.weekdays.open ? 'Abierto' : 'Cerrado'}</span>
+                          <span className="ml-2 text-sm text-text-secondary dark:text-gray-400">{settings.working_hours.weekdays.open ? 'Abierto' : 'Cerrado'}</span>
                         </label>
                       </div>
                     </div>
@@ -690,17 +743,17 @@ const Settings = () => {
                         <input
                           className="h-10 px-3 rounded-md border border-border-color dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                           type="time"
-                          value={settings.operatingHours.saturday.startTime}
+                          value={settings.working_hours.saturday.startTime}
                           onChange={(e) => handleOperatingHoursTimeChange('saturday', 'startTime', e.target.value)}
-                          disabled={!settings.operatingHours.saturday.open}
+                          disabled={!settings.working_hours.saturday.open}
                         />
                         <span className="text-text-secondary">-</span>
                         <input
                           className="h-10 px-3 rounded-md border border-border-color dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                           type="time"
-                          value={settings.operatingHours.saturday.endTime}
+                          value={settings.working_hours.saturday.endTime}
                           onChange={(e) => handleOperatingHoursTimeChange('saturday', 'endTime', e.target.value)}
-                          disabled={!settings.operatingHours.saturday.open}
+                          disabled={!settings.working_hours.saturday.open}
                         />
                       </div>
                       <div className="flex items-center">
@@ -708,35 +761,35 @@ const Settings = () => {
                           <input
                             type="checkbox"
                             className="sr-only peer"
-                            checked={settings.operatingHours.saturday.open}
+                            checked={settings.working_hours.saturday.open}
                             onChange={(e) => handleOperatingHoursToggle('saturday', e.target.checked)}
                           />
                           <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                          <span className="ml-2 text-sm text-text-secondary dark:text-gray-400">{settings.operatingHours.saturday.open ? 'Abierto' : 'Cerrado'}</span>
+                          <span className="ml-2 text-sm text-text-secondary dark:text-gray-400">{settings.working_hours.saturday.open ? 'Abierto' : 'Cerrado'}</span>
                         </label>
                       </div>
                     </div>
                     {/* Schedule Row: Sunday */}
-                    <div className={`flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl bg-background-light dark:bg-slate-900/50 border border-border-color/50 dark:border-slate-800 ${!settings.operatingHours.sunday.open ? 'opacity-60' : ''}`}>
+                    <div className={`flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl bg-background-light dark:bg-slate-900/50 border border-border-color/50 dark:border-slate-800 ${!settings.working_hours.sunday.open ? 'opacity-60' : ''}`}>
                       <div className="w-40 flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${settings.operatingHours.sunday.open ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                        <div className={`w-2 h-2 rounded-full ${settings.working_hours.sunday.open ? 'bg-green-500' : 'bg-gray-400'}`}></div>
                         <span className="font-medium text-text-main dark:text-white">Domingos</span>
                       </div>
                       <div className="flex items-center gap-2 flex-1">
                         <input
                           className="h-10 px-3 rounded-md border border-border-color dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                           type="time"
-                          value={settings.operatingHours.sunday.startTime}
+                          value={settings.working_hours.sunday.startTime}
                           onChange={(e) => handleOperatingHoursTimeChange('sunday', 'startTime', e.target.value)}
-                          disabled={!settings.operatingHours.sunday.open}
+                          disabled={!settings.working_hours.sunday.open}
                         />
                         <span className="text-text-secondary">-</span>
                         <input
                           className="h-10 px-3 rounded-md border border-border-color dark:border-slate-700 bg-white dark:bg-slate-800 text-text-main dark:text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
                           type="time"
-                          value={settings.operatingHours.sunday.endTime}
+                          value={settings.working_hours.sunday.endTime}
                           onChange={(e) => handleOperatingHoursTimeChange('sunday', 'endTime', e.target.value)}
-                          disabled={!settings.operatingHours.sunday.open}
+                          disabled={!settings.working_hours.sunday.open}
                         />
                       </div>
                       <div className="flex items-center">
@@ -744,11 +797,11 @@ const Settings = () => {
                           <input
                             type="checkbox"
                             className="sr-only peer"
-                            checked={settings.operatingHours.sunday.open}
+                            checked={settings.working_hours.sunday.open}
                             onChange={(e) => handleOperatingHoursToggle('sunday', e.target.checked)}
                           />
                           <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary"></div>
-                          <span className="ml-2 text-sm text-text-secondary dark:text-gray-400">{settings.operatingHours.sunday.open ? 'Abierto' : 'Cerrado'}</span>
+                          <span className="ml-2 text-sm text-text-secondary dark:text-gray-400">{settings.working_hours.sunday.open ? 'Abierto' : 'Cerrado'}</span>
                         </label>
                       </div>
                     </div>
@@ -786,24 +839,17 @@ const Settings = () => {
                   {/* Tags Container */}
                   <div className="flex flex-wrap gap-2 mt-2">
                     {settings.services.map((service) => (
-                      <div key={service.id} className="flex items-center gap-2 pl-3 pr-2 py-1.5 bg-primary/20 dark:bg-primary/10 border border-primary/30 rounded-full">
-                        <span className="text-sm font-semibold text-primary-dark dark:text-primary">{service.name}</span>
+                      <div key={service} className="flex items-center gap-2 pl-3 pr-2 py-1.5 bg-primary/20 dark:bg-primary/10 border border-primary/30 rounded-full">
+                        <span className="text-sm font-semibold text-primary-dark dark:text-primary">{service}</span>
                         <button
                           type="button"
-                          onClick={() => handleRemoveService(service.id)}
+                          onClick={() => handleRemoveService(service)}
                           className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-primary/20 text-primary-dark dark:text-primary transition-colors"
                         >
                           <span className="material-symbols-outlined text-[16px]">close</span>
                         </button>
                       </div>
                     ))}
-                    {/* Example of an inactive service tag */}
-                    {/* <div className="flex items-center gap-2 pl-3 pr-2 py-1.5 bg-background-light dark:bg-slate-800 border border-border-color dark:border-slate-600 rounded-full border-dashed">
-                      <span className="text-sm font-medium text-text-secondary">Laboratorio</span>
-                      <button className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-gray-200 dark:hover:bg-slate-700 text-text-secondary transition-colors">
-                        <span className="material-symbols-outlined text-[16px]">add</span>
-                      </button>
-                    </div> */}
                   </div>
                 </div>
               </div>
@@ -824,7 +870,7 @@ const Settings = () => {
                           className="w-full h-12 pl-4 pr-10 rounded-lg border border-border-color dark:border-slate-700 bg-gray-50 dark:bg-slate-900 text-text-secondary font-mono text-sm focus:ring-0 outline-none"
                           readOnly
                           type="text"
-                          value={settings.whatsappWebhookUrl}
+                          value={settings.whatsapp_webhook_url || ''}
                         />
                         <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-green-500 text-[18px]">lock</span>
                       </div>

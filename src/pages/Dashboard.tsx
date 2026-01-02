@@ -4,26 +4,25 @@ import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
 import ProfileDropdown from '@/components/ProfileDropdown';
-import { getInitials } from '@/lib/utils'; // Importar getInitials
+import { getInitials } from '@/lib/utils';
 
 // Interfaces para la estructura de datos esperada
 interface Message {
   id: string;
-  senderName: string;
-  senderAvatarUrl?: string;
-  content: string;
-  timestamp: string;
+  phone_number: string;
+  message_content: string;
+  sender: 'user' | 'assistant';
+  received_at: string;
   read: boolean;
-  type: 'whatsapp' | 'sms' | 'email'; // Example types
+  patient_name?: string;
 }
 
 interface Appointment {
   id: string;
-  patientName: string;
-  service: string;
-  time: string;
-  date: string; // e.g., "Oct 24"
-  status: 'Confirmada' | 'Pendiente' | 'Primera vez';
+  patient_name: string;
+  appointment_type: string;
+  appointment_date: string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'rescheduled';
 }
 
 const Dashboard = () => {
@@ -36,11 +35,11 @@ const Dashboard = () => {
   const [stats, setStats] = useState({
     appointmentsToday: 0,
     unreadMessages: 0,
-    dailyRevenue: 0,
+    dailyRevenue: 0, // Placeholder, as revenue is not in DB schema
   });
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [dashboardError, setDashboardError] = useState<string | null>(null);
-  const [patientSearchQuery, setPatientSearchQuery] = useState(''); // New state for patient search
+  const [patientSearchQuery, setPatientSearchQuery] = useState('');
 
   const isAdmin = user?.user_metadata?.role === 'admin';
 
@@ -56,80 +55,65 @@ const Dashboard = () => {
     setDashboardLoading(true);
     setDashboardError(null);
     try {
-      // Placeholder data for stats
+      // Fetch recent messages
+      const { data: messagesData, error: messagesError } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('received_at', { ascending: false })
+        .limit(4); // Get last 4 messages
+
+      if (messagesError) throw messagesError;
+
+      const unreadMessagesCount = messagesData?.filter(msg => msg.sender === 'user' && !msg.read).length || 0;
+
+      const enrichedMessages = await Promise.all(
+        messagesData.map(async (msg) => {
+          const { data: patientData } = await supabase
+            .from('patients')
+            .select('first_name, last_name')
+            .eq('phone', msg.phone_number)
+            .single();
+          return {
+            ...msg,
+            patient_name: patientData ? `${patientData.first_name} ${patientData.last_name}` : msg.phone_number,
+          };
+        })
+      );
+      setRecentMessages(enrichedMessages);
+
+      // Fetch upcoming appointments
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(today.getDate() + 1);
+
+      const { data: appointmentsData, error: appointmentsError } = await supabase
+        .from('appointments')
+        .select('id, patient_name, appointment_type, appointment_date, status')
+        .eq('user_id', user?.id)
+        .gte('appointment_date', today.toISOString())
+        .order('appointment_date', { ascending: true })
+        .limit(3); // Get next 3 appointments
+
+      if (appointmentsError) throw appointmentsError;
+      setUpcomingAppointments(appointmentsData || []);
+
+      // Calculate stats
+      const { count: appointmentsTodayCount, error: countError } = await supabase
+        .from('appointments')
+        .select('id', { count: 'exact' })
+        .eq('user_id', user?.id)
+        .gte('appointment_date', today.toISOString())
+        .lt('appointment_date', tomorrow.toISOString());
+
+      if (countError) throw countError;
+
       setStats({
-        appointmentsToday: 24,
-        unreadMessages: 5,
-        dailyRevenue: 1240,
+        appointmentsToday: appointmentsTodayCount || 0,
+        unreadMessages: unreadMessagesCount,
+        dailyRevenue: 1240, // Still placeholder
       });
-
-      // Placeholder data for recent messages
-      setRecentMessages([
-        {
-          id: 'msg1',
-          senderName: 'María González',
-          senderAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAOS6Dsw080tA4PGE4aC6QMCLRjikPujnDSLOqtqvKS6iMKEtOZgqRhXQQan2K6yebAyAMPBffTX3xKS7No6Hwfk5e3CYf7_kK1j6CNe1c4o1XyMUmpRliJVxTCoW6_q13r3T6xKStIvZRpaYwlshBVMbMzxSUECSvs2Qj1RCh8-DmztdiUsU9x07YKnqD_yfg8VmIV-kzTuIjRx5nxwzcoMCM8x7LbOVU-7cQ4oIt49j09_LBO-aLyB_o3lZ8XnX8vwnBK2eUj58Y',
-          content: 'Hola, quisiera confirmar mi cita para el próximo martes a las...',
-          timestamp: '10:42 AM',
-          read: false,
-          type: 'whatsapp',
-        },
-        {
-          id: 'msg2',
-          senderName: 'Carlos Rodriguez',
-          senderAvatarUrl: '',
-          content: '¿Tienen disponibilidad para una limpieza dental hoy?',
-          timestamp: '09:15 AM',
-          read: false,
-          type: 'whatsapp',
-        },
-        {
-          id: 'msg3',
-          senderName: 'Javier Méndez',
-          senderAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDYLpEj0Yew8nNxSSAmPR4hWNZw8EETw_yykqKxEdXZy09BjlJcwMMp-WF64pcNAdjZCH1JhHou1xV7ndKd2TGy3uTjS2sLHOTdh6g0IwYz1C0f-pgl0D2B5uDY5QFIxRl5A1dnZcCn7kp9F2tbDY0pisCE0pAoItLGDqZo4_YuJWDewfYXkb3n3dA0OgPPyRK1Os5EvHS6Mets-vxQ3CLgY4IfFEJxJ6BubOtEDAH5q1_eR0NiZol1gA5eCcBkYwRsPMgSxoqRTNA',
-          content: 'Gracias, nos vemos entonces.',
-          timestamp: 'Ayer',
-          read: true,
-          type: 'sms',
-        },
-        {
-          id: 'msg4',
-          senderName: 'Luisa Perez',
-          senderAvatarUrl: '',
-          content: 'Necesito cancelar mi cita por motivos personales.',
-          timestamp: 'Ayer',
-          read: true,
-          type: 'sms',
-        },
-      ]);
-
-      // Placeholder data for upcoming appointments
-      setUpcomingAppointments([
-        {
-          id: 'app1',
-          patientName: 'Sofia Lopez',
-          service: 'Ortodoncia',
-          time: '14:00',
-          date: 'Oct 24',
-          status: 'Confirmada',
-        },
-        {
-          id: 'app2',
-          patientName: 'Miguel Ángel',
-          service: 'Limpieza',
-          time: '15:30',
-          date: 'Oct 24',
-          status: 'Pendiente',
-        },
-        {
-          id: 'app3',
-          patientName: 'Ana Torres',
-          service: 'Consulta General',
-          time: '09:00',
-          date: 'Oct 25',
-          status: 'Primera vez',
-        },
-      ]);
 
     } catch (error: any) {
       console.error('Error fetching dashboard data:', error);
@@ -201,7 +185,27 @@ const Dashboard = () => {
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
   const userRole = user?.user_metadata?.role || 'Admin';
   const userEmail = user?.email || '';
-  const userAvatar = user?.user_metadata?.avatar_url || null; // Ahora puede ser null
+  const userAvatar = user?.user_metadata?.avatar_url || null;
+
+  const getAppointmentStatusText = (status: Appointment['status']) => {
+    switch (status) {
+      case 'confirmed': return 'Confirmada';
+      case 'pending': return 'Pendiente';
+      case 'rescheduled': return 'Reprogramada';
+      case 'cancelled': return 'Cancelada';
+      default: return status;
+    }
+  };
+
+  const getAppointmentStatusBadgeClasses = (status: Appointment['status']) => {
+    switch (status) {
+      case 'confirmed': return 'bg-green-100 text-green-700';
+      case 'pending': return 'bg-orange-100 text-orange-700';
+      case 'rescheduled': return 'bg-blue-100 text-blue-700';
+      case 'cancelled': return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
 
   return (
     <div className="bg-background-light dark:bg-background-dark text-text-main h-screen overflow-hidden flex">
@@ -444,17 +448,10 @@ const Dashboard = () => {
                     recentMessages.map((message) => (
                       <div key={message.id} className="p-4 hover:bg-[#f8fcfb] dark:hover:bg-white/5 transition-colors cursor-pointer flex gap-4 items-start group">
                         <div className="relative flex-shrink-0">
-                          {message.senderAvatarUrl ? (
-                            <div
-                              className="size-10 rounded-full bg-cover bg-center"
-                              style={{ backgroundImage: `url('${message.senderAvatarUrl}')` }}
-                              aria-label={`Foto de perfil de ${message.senderName}`}
-                            ></div>
-                          ) : (
-                            <div className="size-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                              {getInitials(message.senderName)}
-                            </div>
-                          )}
+                          {/* No avatar_url in messages table, use initials */}
+                          <div className="size-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
+                            {getInitials(message.patient_name || message.phone_number)}
+                          </div>
                           <span className="absolute -bottom-1 -right-1 flex items-center justify-center bg-white dark:bg-surface-dark rounded-full p-[2px]">
                             <div className="bg-[#25D366] text-white rounded-full p-[2px] flex items-center justify-center">
                               <span className="material-symbols-outlined text-[10px]">call</span>
@@ -463,11 +460,11 @@ const Dashboard = () => {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex justify-between items-baseline mb-1">
-                            <h4 className="text-sm font-bold text-text-main dark:text-white truncate">{message.senderName}</h4>
-                            <span className="text-xs text-text-secondary">{message.timestamp}</span>
+                            <h4 className="text-sm font-bold text-text-main dark:text-white truncate">{message.patient_name || message.phone_number}</h4>
+                            <span className="text-xs text-text-secondary">{new Date(message.received_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                           </div>
                           <p className={`text-sm truncate ${message.read ? 'text-text-secondary' : 'text-text-main font-medium'} group-hover:text-text-main transition-colors`}>
-                            {message.content}
+                            {message.message_content}
                           </p>
                         </div>
                         <div className="flex flex-col items-end gap-2">
@@ -493,22 +490,16 @@ const Dashboard = () => {
                     upcomingAppointments.map((appointment) => (
                       <div key={appointment.id} className="flex items-start gap-3 p-3 bg-background-light dark:bg-white/5 rounded-xl border border-transparent hover:border-primary/30 transition-colors">
                         <div className="flex flex-col items-center bg-white dark:bg-black/20 rounded-lg p-2 min-w-[50px] shadow-sm">
-                          <span className="text-xs font-bold text-primary-dark uppercase">{appointment.date.split(' ')[0]}</span>
-                          <span className="text-xl font-bold text-text-main dark:text-white">{appointment.date.split(' ')[1]}</span>
+                          <span className="text-xs font-bold text-primary-dark uppercase">{new Date(appointment.appointment_date).toLocaleString('es-ES', { month: 'short' })}</span>
+                          <span className="text-xl font-bold text-text-main dark:text-white">{new Date(appointment.appointment_date).getDate()}</span>
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-bold text-text-main dark:text-white">{appointment.patientName}</p>
-                          <p className="text-xs text-text-secondary">{appointment.service} • {appointment.time}</p>
+                          <p className="text-sm font-bold text-text-main dark:text-white">{appointment.patient_name}</p>
+                          <p className="text-xs text-text-secondary">{appointment.appointment_type} • {new Date(appointment.appointment_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                           <div className="flex items-center gap-2 mt-2">
-                            {appointment.status === 'Confirmada' && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-green-100 text-green-700">Confirmada</span>
-                            )}
-                            {appointment.status === 'Pendiente' && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-orange-100 text-orange-700">Pendiente</span>
-                            )}
-                            {appointment.status === 'Primera vez' && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-700">Primera vez</span>
-                            )}
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${getAppointmentStatusBadgeClasses(appointment.status)}`}>
+                              {getAppointmentStatusText(appointment.status)}
+                            </span>
                           </div>
                         </div>
                       </div>
