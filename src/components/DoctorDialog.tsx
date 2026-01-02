@@ -14,17 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { showError } from '@/utils/toast';
 import { supabase } from '@/integrations/supabase/client'; // Import supabase client
-
-interface Doctor {
-  id: string;
-  user_id?: string;
-  avatar_url: string;
-  full_name: string;
-  specialty: string;
-  status: boolean;
-  created_at: string;
-  updated_at: string;
-}
+import { Doctor } from '@/types/common'; // Importar Doctor desde el archivo compartido
 
 interface DoctorDialogProps {
   isOpen: boolean;
@@ -107,7 +97,7 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ isOpen, onClose, onSave, do
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
       const filePath = `doctor_avatars/${fileName}`;
 
-      const { data, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage // Eliminado 'data'
         .from('doctor-avatars') // This bucket needs to be created in Supabase
         .upload(filePath, avatarFile, {
           cacheControl: '3600',

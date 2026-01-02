@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
-import twilio from 'https://esm.sh/twilio@4.24.0';
+import twilio from 'npm:twilio@4.24.0'; // Cambiado a npm:twilio
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',

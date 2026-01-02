@@ -1,18 +1,17 @@
 import React, { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
-import { useNavigate } from 'react-router-dom';
+// import { useNavigate } from 'react-router-dom'; // Eliminado
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  // const navigate = useNavigate(); // Eliminado
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    // Comentario: Aquí se conectará la lógica de autenticación de Supabase
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setIsLoading(false);
 
