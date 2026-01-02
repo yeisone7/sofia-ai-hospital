@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
-import { getInitials } from '@/lib/utils'; // Mantenido, ya que sí se usa en el JSX
+import { getInitials } from '@/lib/utils'; // Reintroducido
 
 const Profile = () => {
   const { user, isLoading: isSessionLoading } = useSession();
@@ -69,7 +69,7 @@ const Profile = () => {
     const fileName = `${user.id}-${Date.now()}.${fileExtension}`;
     const filePath = `user_avatars/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage // Eliminado 'data'
+    const { error: uploadError } = await supabase.storage
       .from('avatars') // Este bucket debe existir en Supabase Storage
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -378,7 +378,6 @@ const Profile = () => {
                   <button
                     className="px-6 py-2.5 rounded-lg bg-primary text-text-main font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 hover:shadow-primary/30 transform hover:-translate-y-0.5 transition-all"
                     type="submit"
-                    form="settings-form" // Link to the form
                     disabled={isSaving}
                   >
                     {isSaving ? 'Guardando...' : 'Guardar Cambios'}
