@@ -38,24 +38,26 @@ const LandingPage = () => {
       setIsLoading(true);
       setIsError(false);
       try {
-        // TODO: Conectar con la tabla 'clinic_settings' de Supabase
-        // Por ahora, usaremos datos de placeholder
-        const { data, error } = await supabase
-          .from('clinic_settings')
-          .select('*')
-          .eq('id', '1') // Asumiendo que hay una única configuración con ID '1'
-          .single();
+        // TODO: Para una integración real, necesitarás una política RLS en 'clinic_settings'
+        // que permita a los usuarios NO AUTENTICADOS leer los campos públicos de la clínica.
+        // Por ejemplo: CREATE POLICY "Public read for landing page" ON public.clinic_settings FOR SELECT USING (true);
+        // Y luego podrías buscar una configuración global, por ejemplo, con un ID fijo o la primera que encuentres.
+        // const { data, error } = await supabase
+        //   .from('clinic_settings')
+        //   .select('*')
+        //   .eq('id', 'GLOBAL_CLINIC_ID') // Usar un ID fijo para la configuración global
+        //   .single();
 
-        if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
-          throw error;
-        }
+        // if (error && error.code !== 'PGRST116') { // PGRST116 means no rows found
+        //   throw error;
+        // }
 
-        if (data) {
-          setClinicSettings(data as ClinicSettings);
-        } else {
-          // Si no hay configuración, usar valores por defecto o mostrar un estado vacío
+        // if (data) {
+        //   setClinicSettings(data as ClinicSettings);
+        // } else {
+          // Si no hay configuración o la llamada a Supabase está deshabilitada, usar valores por defecto
           setClinicSettings({
-            id: '1',
+            id: '1', // Placeholder ID
             clinic_name: 'Laura AI Clinic',
             clinic_address: '123 Main St, City, Country',
             clinic_phone: '+1234567890',
@@ -74,7 +76,7 @@ const LandingPage = () => {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
           });
-        }
+        // }
       } catch (err: any) {
         console.error('Error fetching clinic settings:', err);
         showError('Error al cargar la configuración de la clínica.');
@@ -189,7 +191,7 @@ const LandingPage = () => {
               </div>
               <div className="relative lg:h-auto w-full flex justify-center lg:justify-end">
                 <div className="relative w-full max-w-md aspect-square lg:aspect-auto lg:h-[600px] rounded-2xl overflow-hidden shadow-2xl border-4 border-white dark:border-surface-dark bg-gray-100">
-                  <div className="absolute inset-0 bg-cover bg-center" data-alt="Doctor smiling while holding a smartphone in a modern medical clinic setting" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBPKs-g6TY5zlyAXyPEu7sqweOrzKLPylfv9ph4nyE7xhUEUQUmaUaTRmoXifnA-YFANUCpRkbPn8VtUfAwDUg7KBnBEHsNBWnEi9t-Pd_ZHE0I5PwIGhCvJ1vvNjVzcJThkTPBJ6HL9u2Pimjp3IxuWTAIgWu0HfkVCrzeTaHsn7sGUYXZQY7ehPL5aqxZHAoiBOUyG5gySSsavoopFKm9zzBC_hP_WjRYhd3TN1MQDDu1Hwng9q9FBUH8RED3C5Jt6f89Rjd5s08')" }}>
+                  <div className="absolute inset-0 bg-cover bg-center" data-alt="Doctor smiling while holding a smartphone in a modern medical clinic setting" style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuBPKs-g6TY5zlyAXyPEu7sqweOrzKLPylfv9ph4nyE7xhUEUQUmaUaTRmoXifnA-YFANUCpRkbPn8VtUfAwDUg7KBnBEHsNBWnEi9t-Pd_ZHE0I5PwIGhCvJ1vvNjVzcJThkTPBJ6HL9u2Pimjp3IxuWTAIgWu0Hfk5e3CYf7_kK1j6CNe1c4o1XyMUmpRliJVxTCoW6_q13r3T6xKStIvZRpaYwlshBVMbMzxSUECSvs2Qj1RCh8-DmztdiUsU9x07YKnqD_yfg8VmIV-kzTuIjRx5nxwzcoMCM8x7LbOVU-7cQ4oIt49j09_LBO-aLyB_o3lZ8XnX8vwnBK2eUj58Y')" }}>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
                   <div className="absolute bottom-6 left-6 right-6 p-4 bg-white/95 dark:bg-surface-dark/95 backdrop-blur rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
