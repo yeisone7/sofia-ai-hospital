@@ -33,12 +33,10 @@ const Messages = () => {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessageContent, setNewMessageContent] = useState('');
-
   const [conversationsLoading, setConversationsLoading] = useState(true);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [chatError, setChatError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-
   const isAdmin = user?.user_metadata?.role === 'admin';
 
   useEffect(() => {
@@ -68,17 +66,51 @@ const Messages = () => {
     try {
       // Placeholder data
       const dummyConversations: Conversation[] = [
-        { id: 'conv1', participantName: 'María González', participantAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAOS6Dsw080tA4PGE4aC6QMCLRjikPujnDSLOqtqvKS6iMKEtOZgqRhXQQan2K6yebAyAMPBffTX3xKS7No6Hwfk5e3CYf7_kK1j6CNe1c4o1XyMUmpRliJVxTCoW6_q13r3T6xKStIvZRpaYwlshBVMbMzxSUECSvs2Qj1RCh8-DmztdiUsU9x07YKnqD_yfg8VmIV-kzTuIjRx5nxwzcoMCM8x7LbOVU-7cQ4oIt49j09_LBO-aLyB_o3lZ8XnX8vwnBK2eUj58Y', lastMessageContent: 'Hola, quisiera confirmar mi cita...', lastMessageTimestamp: '10:42 AM', unreadCount: 1 },
-        { id: 'conv2', participantName: 'Carlos Rodriguez', participantAvatarUrl: '', lastMessageContent: '¿Tienen disponibilidad para hoy?', lastMessageTimestamp: '09:15 AM', unreadCount: 0 },
-        { id: 'conv3', participantName: 'Javier Méndez', participantAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDYLpEj0Yew8nNxSSAmPR4hWNZw8EETw_yykqKxEdXZy09BjlJcwMMp-WF64pcNAdjZCH1JhHou1xV7ndKd2TGy3uTjS2sLHOTdh6g0IwYz1C0f-pgl0D2B5uDY5QFIxRl5A1dnZcCn7kp9F2tbDY0pisCE0pAoItLGDqZo4_YuJWDewfYXkb3n3dA0OgPPyRK1Os5EvHS6Mets-vxQ3CLgY4IfFEJxJ6BubOtEDAH5q1_eR0NiZol1gA5eCcBkYwRsPMgSxoqRTNA', lastMessageContent: 'Gracias, nos vemos entonces.', lastMessageTimestamp: 'Ayer', unreadCount: 0 },
-        { id: 'conv4', participantName: 'Luisa Perez', participantAvatarUrl: '', lastMessageContent: 'Necesito cancelar mi cita...', lastMessageTimestamp: 'Ayer', unreadCount: 0 },
-        { id: 'conv5', participantName: 'Dr. Ana Martínez', participantAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDwHtixTzdpJCvMAVOQqZUxaPsAbVL-KpQR-e7iTOF_8aOi0vWBIPFagRfWtWc06qZf-I1EE4rpqG3OzV5svDIpihjDe0IYkkwjwdna1nKFVIegRlVrxZ87H7kfrkgn3rU2z8iGDb8yJ2fZ8vAAqaIiCJRnK9wUxYtXKIZY8Lxc-qYHApE2E5hOnN9ufqqsr_JETme0Xq-CarLnTdg80p_oaVpwxvlF5Cb3wLh1Gq8EiECrMwTYDG7qWgC2Q5SwmSbqNZsxgKCnea8', lastMessageContent: 'Recordatorio de la reunión de equipo.', lastMessageTimestamp: 'Hace 2 días', unreadCount: 0 },
+        {
+          id: 'conv1',
+          participantName: 'María González',
+          participantAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAOS6Dsw080tA4PGE4aC6QMCLRjikPujnDSLOqtqvKS6iMKEtOZgqRhXQQan2K6yebAyAMPBffTX3xKS7No6Hwfk5e3CYf7_kK1j6CNe1c4o1XyMUmpRliJVxTCoW6_q13r3T6xKStIvZRpaYwlshBVMbMzxSUECSvs2Qj1RCh8-DmztdiUsU9x07YKnqD_yfg8VmIV-kzTuIjRx5nxwzcoMCM8x7LbOVU-7cQ4oIt49j09_LBO-aLyB_o3lZ8XnX8vwnBK2eUj58Y',
+          lastMessageContent: 'Hola, quisiera confirmar mi cita...',
+          lastMessageTimestamp: '10:42 AM',
+          unreadCount: 1
+        },
+        {
+          id: 'conv2',
+          participantName: 'Carlos Rodriguez',
+          participantAvatarUrl: '',
+          lastMessageContent: '¿Tienen disponibilidad para hoy?',
+          lastMessageTimestamp: '09:15 AM',
+          unreadCount: 0
+        },
+        {
+          id: 'conv3',
+          participantName: 'Javier Méndez',
+          participantAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDYLpEj0Yew8nNxSSAmPR4hWNZw8EETw_yykqKxEdXZy09BjlJcwMMp-WF64pcNAdjZCH1JhHou1xV7ndKd2TGy3uTjS2sLHOTdh6g0IwYz1C0f-pgl0D2B5uDY5QFIxRl5A1dnZcCn7kp9F2tbDY0pisCE0pAoItLGDqZo4_YuJWDewfYXkb3n3dA0OgPPyRK1Os5EvHS6Mets-vxQ3CLgY4IfFEJxJ6BubOtEDAH5q1_eR0NiZol1gA5eCcBkYwRsPMgSxoqRTNA',
+          lastMessageContent: 'Gracias, nos vemos entonces.',
+          lastMessageTimestamp: 'Ayer',
+          unreadCount: 0
+        },
+        {
+          id: 'conv4',
+          participantName: 'Luisa Perez',
+          participantAvatarUrl: '',
+          lastMessageContent: 'Necesito cancelar mi cita...',
+          lastMessageTimestamp: 'Ayer',
+          unreadCount: 0
+        },
+        {
+          id: 'conv5',
+          participantName: 'Dr. Ana Martínez',
+          participantAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDwHtixTzdpJCvMAVOQqZUxaPsAbVL-KpQR-e7iTOF_8aOi0vWBIPFagRfWtWc06qZf-I1EE4rpqG3OzV5svDIpihjDe0IYkkwjwdna1nKFVIegRlVrxZ87H7kfrkgn3rU2z8iGDb8yJ2fZ8vAAqaIiCJRnK9wUxYtXKIZY8Lxc-qYHApE2E5hOnN9ufqqsr_JETme0Xq-CarLnTdg80p_oaVpwxvlF5Cb3wLh1Gq8EiECrMwTYDG7qWgC2Q5SwmSbqNZsxgKCnea8',
+          lastMessageContent: 'Recordatorio de la reunión de equipo.',
+          lastMessageTimestamp: 'Hace 2 días',
+          unreadCount: 0
+        },
       ];
       setConversations(dummyConversations);
       if (dummyConversations.length > 0) {
         setSelectedConversationId(dummyConversations[0].id);
       }
-
     } catch (error: any) {
       console.error('Error fetching conversations:', error);
       setChatError('No se pudieron cargar las conversaciones.');
@@ -94,10 +126,34 @@ const Messages = () => {
     try {
       // Placeholder data
       const dummyMessages: ChatMessage[] = [
-        { id: 'msgA1', senderId: 'conv1', content: 'Hola, ¿cómo estás? Quería confirmar mi cita para el próximo martes a las 10 AM.', timestamp: '10:40 AM', isMine: false },
-        { id: 'msgA2', senderId: user?.id || 'user', content: 'Hola María, todo bien. Sí, tu cita está confirmada para el martes a las 10 AM. ¿Necesitas algo más?', timestamp: '10:42 AM', isMine: true },
-        { id: 'msgA3', senderId: 'conv1', content: 'Perfecto, muchas gracias. ¡Nos vemos el martes!', timestamp: '10:45 AM', isMine: false },
-        { id: 'msgA4', senderId: user?.id || 'user', content: 'De nada, que tengas un excelente día.', timestamp: '10:46 AM', isMine: true },
+        {
+          id: 'msgA1',
+          senderId: 'conv1',
+          content: 'Hola, ¿cómo estás? Quería confirmar mi cita para el próximo martes a las 10 AM.',
+          timestamp: '10:40 AM',
+          isMine: false
+        },
+        {
+          id: 'msgA2',
+          senderId: user?.id || 'user',
+          content: 'Hola María, todo bien. Sí, tu cita está confirmada para el martes a las 10 AM. ¿Necesitas algo más?',
+          timestamp: '10:42 AM',
+          isMine: true
+        },
+        {
+          id: 'msgA3',
+          senderId: 'conv1',
+          content: 'Perfecto, muchas gracias. ¡Nos vemos el martes!',
+          timestamp: '10:45 AM',
+          isMine: false
+        },
+        {
+          id: 'msgA4',
+          senderId: user?.id || 'user',
+          content: 'De nada, que tengas un excelente día.',
+          timestamp: '10:46 AM',
+          isMine: true
+        },
       ];
       setMessages(dummyMessages);
     } catch (error: any) {
@@ -243,42 +299,69 @@ const Messages = () => {
         </div>
         {/* Navigation Links */}
         <nav className="flex-1 px-4 py-6 flex flex-col gap-2 overflow-y-auto">
-          <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/dashboard' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/dashboard">
+          <Link
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/dashboard' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
+            to="/dashboard"
+          >
             <span className={`material-symbols-outlined ${location.pathname === '/dashboard' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>dashboard</span>
             <p className={`text-sm font-semibold ${location.pathname === '/dashboard' ? 'text-text-main dark:text-white' : ''}`}>Dashboard</p>
           </Link>
-          <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/messages' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/messages">
+          <Link
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/messages' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
+            to="/messages"
+          >
             <span className={`material-symbols-outlined ${location.pathname === '/messages' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>chat</span>
             <p className={`text-sm font-medium ${location.pathname === '/messages' ? 'text-text-main dark:text-white' : ''}`}>Mensajes</p>
           </Link>
-          <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/patients' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/patients">
+          <Link
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/patients' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
+            to="/patients"
+          >
             <span className={`material-symbols-outlined ${location.pathname === '/patients' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>groups</span>
             <p className={`text-sm font-medium ${location.pathname === '/patients' ? 'text-text-main dark:text-white' : ''}`}>Pacientes</p>
           </Link>
-          <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/appointments' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/appointments">
+          <Link
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/appointments' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
+            to="/appointments"
+          >
             <span className={`material-symbols-outlined ${location.pathname === '/appointments' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>calendar_month</span>
             <p className={`text-sm font-medium ${location.pathname === '/appointments' ? 'text-text-main dark:text-white' : ''}`}>Citas</p>
           </Link>
-          <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/doctors' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/doctors">
+          <Link
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/doctors' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
+            to="/doctors"
+          >
             <span className={`material-symbols-outlined ${location.pathname === '/doctors' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>stethoscope</span>
             <p className={`text-sm font-medium ${location.pathname === '/doctors' ? 'text-text-main dark:text-white' : ''}`}>Médicos</p>
           </Link>
           {isAdmin && (
-            <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/users' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/users">
+            <Link
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/users' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
+              to="/users"
+            >
               <span className={`material-symbols-outlined ${location.pathname === '/users' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>group</span>
               <p className={`text-sm font-medium ${location.pathname === '/users' ? 'text-text-main dark:text-white' : ''}`}>Usuarios</p>
             </Link>
           )}
-          <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/reports' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/reports">
+          <Link
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/reports' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
+            to="/reports"
+          >
             <span className={`material-symbols-outlined ${location.pathname === '/reports' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>analytics</span>
             <p className={`text-sm font-medium ${location.pathname === '/reports' ? 'text-text-main dark:text-white' : ''}`}>Reportes</p>
           </Link>
-          <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/settings' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/settings">
+          <Link
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/settings' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
+            to="/settings"
+          >
             <span className={`material-symbols-outlined ${location.pathname === '/settings' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>settings</span>
             <p className={`text-sm font-medium ${location.pathname === '/settings' ? 'text-text-main dark:text-white' : ''}`}>Configuración</p>
           </Link>
           <div className="mt-auto pt-4 border-t border-[#e7f3f2] dark:border-[#2a3c3b]">
-            <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/help' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/help">
+            <Link
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/help' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
+              to="/help"
+            >
               <span className={`material-symbols-outlined ${location.pathname === '/help' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>help_outline</span>
               <p className={`text-sm font-medium ${location.pathname === '/help' ? 'text-text-main dark:text-white' : ''}`}>Ayuda</p>
             </Link>
@@ -295,7 +378,6 @@ const Messages = () => {
           </button>
         </div>
       </aside>
-
       {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark relative">
         {/* Top Header */}
@@ -335,10 +417,10 @@ const Messages = () => {
             </button>
             {/* Profile */}
             <div className="flex items-center gap-3 cursor-pointer p-1 pr-2 rounded-full hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors border border-transparent hover:border-[#e7f3f2]">
-              {currentUserAvatar ? (
+              {userAvatar ? (
                 <div
                   className="size-9 rounded-full bg-cover bg-center border border-[#e7f3f2]"
-                  style={{ backgroundImage: `url('${currentUserAvatar}')` }}
+                  style={{ backgroundImage: `url('${userAvatar}')` }}
                   aria-label="Retrato profesional de una doctora sonriendo"
                 ></div>
               ) : (
@@ -354,7 +436,6 @@ const Messages = () => {
             </div>
           </div>
         </header>
-
         {/* Main Chat Content Area */}
         <main className="flex-1 flex overflow-hidden">
           {/* Left Panel: Conversations List */}
@@ -415,7 +496,6 @@ const Messages = () => {
               </div>
             )}
           </div>
-
           {/* Right Panel: Chat Window */}
           <div className="flex-1 flex flex-col bg-background-light dark:bg-background-dark">
             {selectedConversation ? (
@@ -443,7 +523,6 @@ const Messages = () => {
                     <span className="material-symbols-outlined">more_vert</span>
                   </button>
                 </div>
-
                 {/* Messages Area */}
                 {messagesLoading ? (
                   renderMessagesLoadingState()
@@ -452,10 +531,7 @@ const Messages = () => {
                 ) : (
                   <div className="flex-1 p-4 space-y-4 overflow-y-auto">
                     {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex ${message.isMine ? 'justify-end' : 'justify-start'}`}
-                      >
+                      <div key={message.id} className={`flex ${message.isMine ? 'justify-end' : 'justify-start'}`}>
                         <div
                           className={`max-w-[70%] p-3 rounded-lg ${
                             message.isMine
@@ -464,7 +540,11 @@ const Messages = () => {
                           }`}
                         >
                           <p className="text-sm">{message.content}</p>
-                          <span className={`block text-right text-xs mt-1 ${message.isMine ? 'text-primary-foreground/80' : 'text-text-secondary'}`}>
+                          <span
+                            className={`block text-right text-xs mt-1 ${
+                              message.isMine ? 'text-primary-foreground/80' : 'text-text-secondary'
+                            }`}
+                          >
                             {message.timestamp}
                           </span>
                         </div>
@@ -473,9 +553,11 @@ const Messages = () => {
                     <div ref={messagesEndRef} />
                   </div>
                 )}
-
                 {/* Message Input */}
-                <form onSubmit={handleSendMessage} className="p-4 border-t border-[#e7f3f2] dark:border-[#2a3c3b] bg-surface-light dark:bg-surface-dark flex items-center gap-3">
+                <form
+                  onSubmit={handleSendMessage}
+                  className="p-4 border-t border-[#e7f3f2] dark:border-[#2a3c3b] bg-surface-light dark:bg-surface-dark flex items-center gap-3"
+                >
                   <input
                     type="text"
                     className="flex-1 p-3 rounded-xl border border-[#e7f3f2] dark:border-[#2a3c3b] bg-background-light dark:bg-background-dark text-text-main dark:text-white placeholder:text-text-secondary focus:outline-none focus:ring-2 focus:ring-primary/50"
