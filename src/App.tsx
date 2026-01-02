@@ -11,7 +11,9 @@ import Dashboard from "./pages/Dashboard";
 import Appointments from "./pages/Appointments";
 import Doctors from "./pages/Doctors";
 import Messages from "./pages/Messages";
-import Settings from "./pages/Settings"; // Importar la página de Configuración
+import Settings from "./pages/Settings";
+import Patients from "./pages/Patients"; // Importar la página de Pacientes
+import Profile from "./pages/Profile"; // Importar la página de Perfil
 import { SessionContextProvider } from "./integrations/supabase/session-context";
 
 const queryClient = new QueryClient();
@@ -31,7 +33,9 @@ const App = () => (
             <Route path="/messages" element={<Messages />} />
             <Route path="/appointments" element={<Appointments />} />
             <Route path="/doctors" element={<Doctors />} />
-            <Route path="/settings" element={<Settings />} /> {/* Ruta para la página de Configuración */}
+            <Route path="/settings" element={<Settings />} />
+            <Route path="/patients" element={<Patients />} /> {/* Ruta para la página de Pacientes */}
+            <Route path="/profile" element={<Profile />} /> {/* Ruta para la página de Perfil */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

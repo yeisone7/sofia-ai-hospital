@@ -3,6 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
+import ProfileDropdown from '@/components/ProfileDropdown'; // Import the new ProfileDropdown component
 
 // Interfaces para la estructura de datos esperada
 interface Message {
@@ -38,6 +39,7 @@ const Dashboard = () => {
   });
   const [dashboardLoading, setDashboardLoading] = useState(true);
   const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const [patientSearchQuery, setPatientSearchQuery] = useState(''); // New state for patient search
 
   useEffect(() => {
     if (!isSessionLoading && !user) {
@@ -156,6 +158,18 @@ const Dashboard = () => {
     showSuccess('Funcionalidad "Revisar agenda" en desarrollo.');
   };
 
+  const handlePatientSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPatientSearchQuery(e.target.value);
+    // Implement actual search logic or navigate to patients page with query
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (patientSearchQuery.trim()) {
+      navigate(`/patients?search=${encodeURIComponent(patientSearchQuery.trim())}`);
+    }
+  };
+
   const getInitials = (name: string) => {
     const parts = name.split(' ');
     if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
@@ -189,6 +203,7 @@ const Dashboard = () => {
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
   const userRole = user?.user_metadata?.role || 'Admin';
+  const userEmail = user?.email || '';
   const userAvatar = user?.user_metadata?.avatar_url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBKGJqOrxKC8dOGnL2B3rcuN8cbystShMdVLZ1f22GeobGXHdn17h731ohnBgSFGJzHSaFFsKSuto3ONj63pIfPpeClcp3tWAb-bclE_Hdvuy0R-QbHkMZiM6WYYc3nXNPjiDH0EMCfTWpN1A8GBrVRx2om-uuCNIMSN-DSrG8z2WZluh5jVJxmObR7BrX_OOftM87dob0SyNkuMtcrKkmQBolg7ESQ8bWASHic7KVtOqf3B-tpEFB-W_Ojbd_zMuoMOU5VqJiH_A'; // Placeholder
 
   return (
@@ -275,31 +290,31 @@ const Dashboard = () => {
           {/* Right: Search, Notifications, Profile */}
           <div className="flex items-center gap-4 sm:gap-6">
             {/* Search Bar */}
-            <div className="hidden lg:flex items-center bg-[#f2f8f7] dark:bg-white/5 rounded-xl h-10 px-3 w-64 border border-transparent focus-within:border-primary/50 transition-colors">
+            <form onSubmit={handleSearchSubmit} className="hidden lg:flex items-center bg-[#f2f8f7] dark:bg-white/5 rounded-xl h-10 px-3 w-64 border border-transparent focus-within:border-primary/50 transition-colors">
               <span className="material-symbols-outlined text-text-secondary dark:text-gray-400 text-[20px]">search</span>
-              <input className="bg-transparent border-none outline-none focus:ring-0 text-sm w-full text-text-main dark:text-white placeholder:text-text-secondary/70 ml-2" placeholder="Buscar paciente..." type="text" />
-            </div>
+              <input
+                className="bg-transparent border-none outline-none focus:ring-0 text-sm w-full text-text-main dark:text-white placeholder:text-text-secondary/70 ml-2"
+                placeholder="Buscar paciente..."
+                type="text"
+                value={patientSearchQuery}
+                onChange={handlePatientSearch}
+              />
+            </form>
             <div className="h-8 w-[1px] bg-[#e7f3f2] dark:bg-[#2a3c3b] hidden sm:block"></div>
             {/* Notifications */}
-            <button className="relative p-2 rounded-full hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors text-text-main dark:text-white">
+            <button onClick={handleViewAllMessages} className="relative p-2 rounded-full hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors text-text-main dark:text-white">
               <span className="material-symbols-outlined">notifications</span>
               {stats.unreadMessages > 0 && (
                 <span className="absolute top-2 right-2 size-2 bg-red-500 rounded-full border-2 border-surface-light dark:border-surface-dark"></span>
               )}
             </button>
             {/* Profile */}
-            <div className="flex items-center gap-3 cursor-pointer p-1 pr-2 rounded-full hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors border border-transparent hover:border-[#e7f3f2]">
-              <div
-                className="size-9 rounded-full bg-cover bg-center border border-[#e7f3f2]"
-                style={{ backgroundImage: `url('${userAvatar}')` }}
-                aria-label="Retrato profesional de una doctora sonriendo"
-              ></div>
-              <div className="hidden xl:flex flex-col items-start mr-1">
-                <span className="text-sm font-bold text-text-main dark:text-white leading-none">{userName}</span>
-                <span className="text-[10px] text-text-secondary font-medium mt-1">{userRole}</span>
-              </div>
-              <span className="material-symbols-outlined text-text-secondary text-[18px] hidden xl:block">expand_more</span>
-            </div>
+            <ProfileDropdown
+              userName={userName}
+              userRole={userRole}
+              userEmail={userEmail}
+              userAvatar={userAvatar}
+            />
           </div>
         </header>
         {/* Scrollable Main Content */}
@@ -337,6 +352,10 @@ const Dashboard = () => {
                 <Link className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 min-w-fit ${location.pathname === '/doctors' ? 'border-primary' : 'border-transparent group hover:border-primary/30 transition-colors'}`} to="/doctors">
                   <span className={`material-symbols-outlined text-[20px] ${location.pathname === '/doctors' ? 'text-primary' : 'text-text-secondary group-hover:text-primary'}`}>stethoscope</span>
                   <span className={`text-sm font-bold ${location.pathname === '/doctors' ? 'text-text-main dark:text-white' : 'text-text-secondary group-hover:text-primary dark:text-gray-400'}`}>Médicos</span>
+                </Link>
+                <Link className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 min-w-fit ${location.pathname === '/patients' ? 'border-primary' : 'border-transparent group hover:border-primary/30 transition-colors'}`} to="/patients">
+                  <span className={`material-symbols-outlined text-[20px] ${location.pathname === '/patients' ? 'text-primary' : 'text-text-secondary group-hover:text-primary'}`}>groups</span>
+                  <span className={`text-sm font-bold ${location.pathname === '/patients' ? 'text-text-main dark:text-white' : 'text-text-secondary group-hover:text-primary dark:text-gray-400'}`}>Pacientes</span>
                 </Link>
                 <Link className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 min-w-fit ${location.pathname === '/reports' ? 'border-primary' : 'border-transparent group hover:border-primary/30 transition-colors'}`} to="/reports">
                   <span className={`material-symbols-outlined text-[20px] ${location.pathname === '/reports' ? 'text-primary' : 'text-text-secondary group-hover:text-primary'}`}>analytics</span>
