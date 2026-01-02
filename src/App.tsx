@@ -14,7 +14,8 @@ import Messages from "./pages/Messages";
 import Settings from "./pages/Settings";
 import Patients from "./pages/Patients";
 import Profile from "./pages/Profile";
-import LandingPage from "./pages/LandingPage"; // Importar la LandingPage
+import LandingPage from "./pages/LandingPage";
+import Users from "./pages/Users"; // Importar la página de Usuarios
 import { SessionContextProvider } from "./integrations/supabase/session-context";
 
 const queryClient = new QueryClient();
@@ -28,7 +29,7 @@ const App = () => (
         <SessionContextProvider>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/landing" element={<LandingPage />} /> {/* Ruta para la LandingPage */}
+            <Route path="/landing" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/settings" element={<Settings />} />
             <Route path="/patients" element={<Patients />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/users" element={<Users />} /> {/* Ruta para la página de Usuarios */}
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

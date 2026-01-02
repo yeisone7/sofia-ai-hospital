@@ -21,6 +21,8 @@ const Profile = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [avatarFile, setAvatarFile] = useState<File | null>(null); // State for the selected file
 
+  const isAdmin = user?.user_metadata?.role === 'admin';
+
   useEffect(() => {
     if (!isSessionLoading && !user) {
       navigate('/login');
@@ -150,6 +152,7 @@ const Profile = () => {
   };
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
+  const userRole = user?.user_metadata?.role || 'Admin';
   const userAvatar = profileData.avatarUrl || null; // Usar el avatar del estado local
 
   if (profileLoading) {
@@ -215,6 +218,12 @@ const Profile = () => {
             <span className={`material-symbols-outlined ${location.pathname === '/doctors' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>stethoscope</span>
             <p className={`text-sm font-medium ${location.pathname === '/doctors' ? 'text-text-main dark:text-white' : ''}`}>Médicos</p>
           </Link>
+          {isAdmin && (
+            <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/users' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/users">
+              <span className={`material-symbols-outlined ${location.pathname === '/users' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>group</span>
+              <p className={`text-sm font-medium ${location.pathname === '/users' ? 'text-text-main dark:text-white' : ''}`}>Usuarios</p>
+            </Link>
+          )}
           <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/reports' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/reports">
             <span className={`material-symbols-outlined ${location.pathname === '/reports' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>analytics</span>
             <p className={`text-sm font-medium ${location.pathname === '/reports' ? 'text-text-main dark:text-white' : ''}`}>Reportes</p>
@@ -369,6 +378,7 @@ const Profile = () => {
                   <button
                     className="px-6 py-2.5 rounded-lg bg-primary text-text-main font-bold text-sm shadow-lg shadow-primary/20 hover:bg-primary/90 hover:shadow-primary/30 transform hover:-translate-y-0.5 transition-all"
                     type="submit"
+                    form="settings-form" // Link to the form
                     disabled={isSaving}
                   >
                     {isSaving ? 'Guardando...' : 'Guardar Cambios'}

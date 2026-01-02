@@ -34,6 +34,8 @@ const Doctors = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
 
+  const isAdmin = user?.user_metadata?.role === 'admin';
+
   useEffect(() => {
     if (!isSessionLoading && !user) {
       navigate('/login');
@@ -349,6 +351,12 @@ const Doctors = () => {
             <span className={`material-symbols-outlined ${location.pathname === '/doctors' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>stethoscope</span>
             <p className={`text-sm font-medium ${location.pathname === '/doctors' ? 'text-text-main dark:text-white' : ''}`}>Médicos</p>
           </Link>
+          {isAdmin && (
+            <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/users' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/users">
+              <span className={`material-symbols-outlined ${location.pathname === '/users' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>group</span>
+              <p className={`text-sm font-medium ${location.pathname === '/users' ? 'text-text-main dark:text-white' : ''}`}>Usuarios</p>
+            </Link>
+          )}
           <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/reports' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/reports">
             <span className={`material-symbols-outlined ${location.pathname === '/reports' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>analytics</span>
             <p className={`text-sm font-medium ${location.pathname === '/reports' ? 'text-text-main dark:text-white' : ''}`}>Reportes</p>
@@ -403,9 +411,9 @@ const Doctors = () => {
             <nav className="flex text-sm text-text-secondary mb-1">
               <Link className="hover:text-text-main dark:hover:text-white cursor-pointer" to="/dashboard">Panel</Link>
               <span className="mx-2">/</span>
-              <span className="text-text-main dark:text-primary font-medium">Médicos</span>
+              <span className="text-text-main dark:text-primary font-medium">Citas</span>
             </nav>
-            <h2 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">Gestión de Médicos</h2>
+            <h2 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">Gestión de Citas</h2>
           </div>
           <div className="flex items-center gap-4">
             <button className="relative p-2 text-text-secondary hover:text-primary transition-colors rounded-full hover:bg-primary/10">
@@ -420,150 +428,165 @@ const Doctors = () => {
         </header>
         {/* Scrollable Main Content */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          {doctorsLoading ? (
+          {appointmentsLoading ? (
             renderLoadingState()
-          ) : allDoctors.length === 0 && !searchQuery ? (
+          ) : filteredAppointments.length === 0 && !searchQuery ? (
             renderEmptyState()
           ) : (
-            <div className="max-w-6xl mx-auto flex flex-col gap-6 mt-4">
-              {/* Action Bar */}
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="relative group w-full md:max-w-md">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 group-focus-within:text-primary transition-colors">search</span>
-                  </div>
-                  <input
-                    className="block w-full pl-10 pr-3 py-2.5 border-none rounded-xl bg-white dark:bg-surface-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/50 shadow-sm text-sm transition-all"
-                    placeholder="Buscar por nombre, especialidad o ID..."
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      setCurrentPage(1);
-                    }}
-                  />
+            <div className="max-w-[1200px] mx-auto flex flex-col gap-8">
+              {/* Page Title & Primary Action */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-2xl font-bold text-text-main dark:text-white tracking-tight">Gestión de Citas</h3>
+                  <p className="text-text-secondary mt-1">Aquí puedes ver y gestionar todas las citas de tu clínica.</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button className="hidden md:flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-surface-dark text-slate-700 dark:text-slate-200 text-sm font-bold border border-transparent hover:border-border-light dark:hover:border-border-dark shadow-sm hover:shadow transition-all">
-                    <span className="material-symbols-outlined text-[20px]">filter_list</span>
-                    <span>Filtros</span>
-                  </button>
-                  <button onClick={handleAddDoctor} className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-teal-950 text-sm font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all transform active:scale-95">
-                    <span className="material-symbols-outlined text-[20px]">add</span>
-                    <span>Agregar Médico</span>
-                  </button>
+                <button
+                  onClick={handleNewAppointment}
+                  className="flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-text-main font-bold px-5 h-11 rounded-xl shadow-lg shadow-primary/20 transition-all active:scale-95 w-full sm:w-auto"
+                >
+                  <span className="material-symbols-outlined text-[20px]">add</span>
+                  <span>Nueva Cita</span>
+                </button>
+              </div>
+              {/* Tabs Navigation */}
+              <div className="border-b border-[#d0e7e5] dark:border-[#2a3c3b]">
+                <div className="flex gap-6 sm:gap-8 overflow-x-auto no-scrollbar">
+                  <Link className="flex items-center gap-2 border-b-[3px] border-transparent pb-3 px-1 min-w-fit group hover:border-primary/30 transition-colors" to="/dashboard">
+                    <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">dashboard</span>
+                    <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Dashboard</span>
+                  </Link>
+                  <Link className="flex items-center gap-2 border-b-[3px] border-transparent pb-3 px-1 min-w-fit group hover:border-primary/30 transition-colors" to="/messages">
+                    <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">chat</span>
+                    <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Mensajes</span>
+                  </Link>
+                  <Link className="flex items-center gap-2 border-b-[3px] border-primary pb-3 px-1 min-w-fit" to="/appointments">
+                    <span className="material-symbols-outlined text-primary text-[20px]">schedule</span>
+                    <span className="text-text-main dark:text-white text-sm font-bold">Citas</span>
+                  </Link>
+                  <Link className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors group text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white" to="/doctors">
+                    <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">stethoscope</span>
+                    <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Médicos</span>
+                  </Link>
+                  {isAdmin && (
+                    <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/users' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/users">
+                      <span className={`material-symbols-outlined ${location.pathname === '/users' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>group</span>
+                      <span className={`text-sm font-medium ${location.pathname === '/users' ? 'text-text-main dark:text-white' : ''}`}>Usuarios</span>
+                    </Link>
+                  )}
+                  <Link className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors group text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white" to="/settings">
+                    <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">settings</span>
+                    <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Configuración</span>
+                  </Link>
                 </div>
               </div>
-              {/* Doctors Table Card */}
-              <div className="bg-surface-light dark:bg-surface-dark rounded-2xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden flex flex-col">
-                {/* Table Wrapper */}
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="border-b border-border-light dark:border-border-dark bg-slate-50/50 dark:bg-white/5">
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          Médico
-                        </th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          Especialidad
-                        </th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          Estado
-                        </th>
-                        <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right">
-                          Acciones
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border-light dark:divide-border-dark">
-                      {filteredDoctors.length === 0 ? (
-                        <tr>
-                          <td colSpan={4} className="px-6 py-4 text-center text-text-secondary">
-                            No se encontraron médicos que coincidan con la búsqueda.
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredDoctors.map((doctor) => (
-                          <tr key={doctor.id} className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="flex items-center gap-3">
-                                {doctor.avatar_url ? (
-                                  <img src={doctor.avatar_url} alt={doctor.full_name} className="size-10 rounded-full object-cover" />
-                                ) : (
-                                  <div className="size-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">
-                                    {getInitials(doctor.full_name)}
-                                  </div>
-                                )}
-                                <div className="flex flex-col">
-                                  <span className="text-sm font-bold text-slate-900 dark:text-white">{doctor.full_name}</span>
-                                  <span className="text-xs text-slate-500 dark:text-slate-400">ID: {doctor.id.substring(0, 8)}...</span>
-                                </div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getSpecialtyBadgeClasses(doctor.specialty)}`}>
-                                {doctor.specialty}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${doctor.status ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300' : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'}`}>
-                                {doctor.status ? 'Activo' : 'Inactivo'}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-right">
-                              <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleToggleStatus(doctor)} className="p-2 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title={doctor.status ? 'Desactivar' : 'Activar'}>
-                                  <span className="material-symbols-outlined text-[20px]">{doctor.status ? 'toggle_on' : 'toggle_off'}</span>
-                                </button>
-                                <button onClick={() => handleEditDoctor(doctor)} className="p-2 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Editar">
-                                  <span className="material-symbols-outlined text-[20px]">edit</span>
-                                </button>
-                                <button onClick={() => handleDeleteDoctor(doctor.id)} className="p-2 text-slate-500 hover:text-red-500 hover:bg-hover-red-light-bg dark:hover:bg-hover-red-dark-bg rounded-lg transition-colors" title="Eliminar">
-                                  <span className="material-symbols-outlined text-[20px]">delete</span>
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
+              {/* Appointments Overview / Filters */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Card 1: Total Citas */}
+                <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors cursor-default">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
+                      <span className="material-symbols-outlined">event</span>
+                    </div>
+                    <span className="text-[#078830] bg-[#078830]/10 px-2 py-0.5 rounded-full text-xs font-bold">+15%</span>
+                  </div>
+                  <div>
+                    <p className="text-text-secondary text-sm font-medium">Total Citas</p>
+                    <h4 className="text-2xl font-bold text-text-main dark:text-white mt-1">{allAppointments.length}</h4>
+                  </div>
                 </div>
-                {/* Pagination */}
-                <div className="px-6 py-4 border-t border-border-light dark:border-border-dark flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
-                  <p className="text-sm text-slate-500 dark:text-slate-400">
-                    Mostrando <span className="font-bold text-slate-900 dark:text-white">{(currentPage - 1) * doctorsPerPage + 1}-{Math.min(currentPage * doctorsPerPage, allDoctors.length)}</span> de <span className="font-bold text-slate-900 dark:text-white">{allDoctors.length}</span> resultados
-                  </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={handlePreviousPage}
-                      disabled={currentPage === 1}
-                      className="px-3 py-1 text-sm text-slate-500 bg-white dark:bg-white/10 border border-border-light dark:border-transparent rounded-lg hover:bg-slate-50 dark:hover:bg-white/20 disabled:opacity-50"
+                {/* Card 2: Citas Confirmadas */}
+                <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors cursor-default">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
+                      <span className="material-symbols-outlined">check_circle</span>
+                    </div>
+                    <span className="text-[#078830] bg-[#078830]/10 px-2 py-0.5 rounded-full text-xs font-bold">+8%</span>
+                  </div>
+                  <div>
+                    <p className="text-text-secondary text-sm font-medium">Confirmadas</p>
+                    <h4 className="text-2xl font-bold text-text-main dark:text-white mt-1">{allAppointments.filter(app => app.status === 'Confirmada').length}</h4>
+                  </div>
+                </div>
+                {/* Card 3: Citas Pendientes */}
+                <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors cursor-default">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
+                      <span className="material-symbols-outlined">pending_actions</span>
+                    </div>
+                    <span className="text-[#ff9800] bg-[#ff9800]/10 px-2 py-0.5 rounded-full text-xs font-bold">-2%</span>
+                  </div>
+                  <div>
+                    <p className="text-text-secondary text-sm font-medium">Pendientes</p>
+                    <h4 className="text-2xl font-bold text-text-main dark:text-white mt-1">{allAppointments.filter(app => app.status === 'Pendiente').length}</h4>
+                  </div>
+                </div>
+                {/* Card 4: Citas Canceladas */}
+                <div className="bg-surface-light dark:bg-surface-dark p-5 rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col gap-3 group hover:border-primary/50 transition-colors cursor-default">
+                  <div className="flex items-center justify-between">
+                    <div className="p-2 bg-[#e7f3f2] dark:bg-white/5 rounded-lg text-text-main dark:text-white">
+                      <span className="material-symbols-outlined">cancel</span>
+                    </div>
+                    <span className="text-[#f44336] bg-[#f44336]/10 px-2 py-0.5 rounded-full text-xs font-bold">+1%</span>
+                  </div>
+                  <div>
+                    <p className="text-text-secondary text-sm font-medium">Canceladas</p>
+                    <h4 className="text-2xl font-bold text-text-main dark:text-white mt-1">{allAppointments.filter(app => app.status === 'Cancelada').length}</h4>
+                  </div>
+                </div>
+              </div>
+
+              {/* Appointments List */}
+              <div className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-[#e7f3f2] dark:border-[#2a3c3b] shadow-sm flex flex-col overflow-hidden">
+                <div className="p-5 border-b border-[#e7f3f2] dark:border-[#2a3c3b] flex justify-between items-center bg-[#fafdfd] dark:bg-white/5">
+                  <h3 className="text-lg font-bold text-text-main dark:text-white">Todas las Citas</h3>
+                  <div className="flex items-center gap-2">
+                    <select
+                      className="bg-transparent border border-[#e7f3f2] dark:border-[#2a3c3b] rounded-md px-3 py-1 text-sm text-text-main dark:text-white focus:outline-none focus:ring-1 focus:ring-primary"
+                      value={filterStatus}
+                      onChange={(e) => setFilterStatus(e.target.value as any)}
                     >
-                      Anterior
-                    </button>
-                    <button
-                      onClick={handleNextPage}
-                      disabled={currentPage === totalPages}
-                      className="px-3 py-1 text-sm text-slate-500 bg-white dark:bg-white/10 border border-border-light dark:border-transparent rounded-lg hover:bg-slate-50 dark:hover:bg-white/20 disabled:opacity-50"
-                    >
-                      Siguiente
+                      <option value="all">Todos los estados</option>
+                      <option value="Confirmada">Confirmada</option>
+                      <option value="Pendiente">Pendiente</option>
+                      <option value="Primera vez">Primera vez</option>
+                      <option value="Cancelada">Cancelada</option>
+                    </select>
+                    <button className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md">
+                      <span className="material-symbols-outlined text-text-secondary text-[20px]">filter_list</span>
                     </button>
                   </div>
+                </div>
+                <div className="divide-y divide-[#f0f7f6] dark:divide-[#2a3c3b]">
+                  {filteredAppointments.length === 0 ? (
+                    <div className="p-4 text-center text-text-secondary">No hay citas que coincidan con los filtros.</div>
+                  ) : (
+                    filteredAppointments.map((appointment) => (
+                      <div key={appointment.id} className="p-4 hover:bg-[#f8fcfb] dark:hover:bg-white/5 transition-colors cursor-pointer flex gap-4 items-center" onClick={() => handleViewAppointmentDetails(appointment.id)}>
+                        <div className="flex flex-col items-center bg-white dark:bg-black/20 rounded-lg p-2 min-w-[50px] shadow-sm">
+                          <span className="text-xs font-bold text-primary-dark uppercase">{appointment.date.split(' ')[0]}</span>
+                          <span className="text-xl font-bold text-text-main dark:text-white">{appointment.date.split(' ')[1]}</span>
+                        </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-text-main dark:text-white">{appointment.patientName}</p>
+                          <p className="text-xs text-text-secondary">{appointment.service} • {appointment.time}</p>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${getStatusBadgeClasses(appointment.status)}`}>
+                          {appointment.status}
+                        </span>
+                        <button className="p-1 hover:bg-gray-100 dark:hover:bg-white/10 rounded-md text-text-secondary">
+                          <span className="material-symbols-outlined text-[20px]">arrow_forward_ios</span>
+                        </button>
+                      </div>
+                    ))
+                  )}
                 </div>
               </div>
             </div>
           )}
         </main>
       </div>
-      <DoctorDialog
-        isOpen={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        onSave={handleSaveDoctor}
-        doctor={editingDoctor}
-      />
     </div>
   );
 };
 
-export default Doctors;
+export default Appointments;

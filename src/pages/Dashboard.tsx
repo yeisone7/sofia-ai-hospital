@@ -42,6 +42,8 @@ const Dashboard = () => {
   const [dashboardError, setDashboardError] = useState<string | null>(null);
   const [patientSearchQuery, setPatientSearchQuery] = useState(''); // New state for patient search
 
+  const isAdmin = user?.user_metadata?.role === 'admin';
+
   useEffect(() => {
     if (!isSessionLoading && !user) {
       navigate('/login');
@@ -239,6 +241,12 @@ const Dashboard = () => {
             <span className={`material-symbols-outlined ${location.pathname === '/doctors' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>stethoscope</span>
             <p className={`text-sm font-medium ${location.pathname === '/doctors' ? 'text-text-main dark:text-white' : ''}`}>Médicos</p>
           </Link>
+          {isAdmin && (
+            <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/users' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/users">
+              <span className={`material-symbols-outlined ${location.pathname === '/users' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>group</span>
+              <p className={`text-sm font-medium ${location.pathname === '/users' ? 'text-text-main dark:text-white' : ''}`}>Usuarios</p>
+            </Link>
+          )}
           <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/reports' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/reports">
             <span className={`material-symbols-outlined ${location.pathname === '/reports' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>analytics</span>
             <p className={`text-sm font-medium ${location.pathname === '/reports' ? 'text-text-main dark:text-white' : ''}`}>Reportes</p>
@@ -333,32 +341,38 @@ const Dashboard = () => {
             <div className="border-b border-[#d0e7e5] dark:border-[#2a3c3b]">
               <div className="flex gap-6 sm:gap-8 overflow-x-auto no-scrollbar">
                 <Link className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 min-w-fit ${location.pathname === '/dashboard' ? 'border-primary' : 'border-transparent group hover:border-primary/30 transition-colors'}`} to="/dashboard">
-                  <span className={`material-symbols-outlined text-[20px] ${location.pathname === '/dashboard' ? 'text-primary' : 'text-text-secondary group-hover:text-primary'}`}>dashboard</span>
+                  <span className={`material-symbols-outlined ${location.pathname === '/dashboard' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>dashboard</span>
                   <span className={`text-sm font-bold ${location.pathname === '/dashboard' ? 'text-text-main dark:text-white' : 'text-text-secondary group-hover:text-primary dark:text-gray-400'}`}>Dashboard</span>
                 </Link>
                 <Link className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 min-w-fit ${location.pathname === '/messages' ? 'border-primary' : 'border-transparent group hover:border-primary/30 transition-colors'}`} to="/messages">
-                  <span className={`material-symbols-outlined text-[20px] ${location.pathname === '/messages' ? 'text-primary' : 'text-text-secondary group-hover:text-primary'}`}>chat</span>
-                  <span className={`text-sm font-bold ${location.pathname === '/messages' ? 'text-text-main dark:text-white' : 'text-text-secondary group-hover:text-primary dark:text-gray-400'}`}>Mensajes</span>
+                  <span className={`material-symbols-outlined ${location.pathname === '/messages' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>chat</span>
+                  <p className={`text-sm font-medium ${location.pathname === '/messages' ? 'text-text-main dark:text-white' : ''}`}>Mensajes</p>
                 </Link>
-                <Link className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 min-w-fit ${location.pathname === '/appointments' ? 'border-primary' : 'border-transparent group hover:border-primary/30 transition-colors'}`} to="/appointments">
-                  <span className={`material-symbols-outlined text-[20px] ${location.pathname === '/appointments' ? 'text-primary' : 'text-text-secondary group-hover:text-primary'}`}>schedule</span>
-                  <span className={`text-sm font-bold ${location.pathname === '/appointments' ? 'text-text-main dark:text-white' : 'text-text-secondary group-hover:text-primary dark:text-gray-400'}`}>Citas</span>
+                <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/patients' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/patients">
+                  <span className={`material-symbols-outlined ${location.pathname === '/patients' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>groups</span>
+                  <p className={`text-sm font-medium ${location.pathname === '/patients' ? 'text-text-main dark:text-white' : ''}`}>Pacientes</p>
                 </Link>
-                <Link className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 min-w-fit ${location.pathname === '/doctors' ? 'border-primary' : 'border-transparent group hover:border-primary/30 transition-colors'}`} to="/doctors">
-                  <span className={`material-symbols-outlined text-[20px] ${location.pathname === '/doctors' ? 'text-primary' : 'text-text-secondary group-hover:text-primary'}`}>stethoscope</span>
-                  <span className={`text-sm font-bold ${location.pathname === '/doctors' ? 'text-text-main dark:text-white' : 'text-text-secondary group-hover:text-primary dark:text-gray-400'}`}>Médicos</span>
+                <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/appointments' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/appointments">
+                  <span className={`material-symbols-outlined ${location.pathname === '/appointments' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>calendar_month</span>
+                  <p className={`text-sm font-medium ${location.pathname === '/appointments' ? 'text-text-main dark:text-white' : ''}`}>Citas</p>
                 </Link>
-                <Link className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 min-w-fit ${location.pathname === '/patients' ? 'border-primary' : 'border-transparent group hover:border-primary/30 transition-colors'}`} to="/patients">
-                  <span className={`material-symbols-outlined text-[20px] ${location.pathname === '/patients' ? 'text-primary' : 'text-text-secondary group-hover:text-primary'}`}>groups</span>
-                  <span className={`text-sm font-bold ${location.pathname === '/patients' ? 'text-text-main dark:text-white' : 'text-text-secondary group-hover:text-primary dark:text-gray-400'}`}>Pacientes</span>
+                <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/doctors' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/doctors">
+                  <span className={`material-symbols-outlined ${location.pathname === '/doctors' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>stethoscope</span>
+                  <p className={`text-sm font-medium ${location.pathname === '/doctors' ? 'text-text-main dark:text-white' : ''}`}>Médicos</p>
                 </Link>
-                <Link className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 min-w-fit ${location.pathname === '/reports' ? 'border-primary' : 'border-transparent group hover:border-primary/30 transition-colors'}`} to="/reports">
-                  <span className={`material-symbols-outlined text-[20px] ${location.pathname === '/reports' ? 'text-primary' : 'text-text-secondary group-hover:text-primary'}`}>analytics</span>
-                  <span className={`text-sm font-bold ${location.pathname === '/reports' ? 'text-text-main dark:text-white' : 'text-text-secondary group-hover:text-primary dark:text-gray-400'}`}>Reportes</span>
+                {isAdmin && (
+                  <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/users' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/users">
+                    <span className={`material-symbols-outlined ${location.pathname === '/users' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>group</span>
+                    <p className={`text-sm font-medium ${location.pathname === '/users' ? 'text-text-main dark:text-white' : ''}`}>Usuarios</p>
+                  </Link>
+                )}
+                <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/reports' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/reports">
+                  <span className={`material-symbols-outlined ${location.pathname === '/reports' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>analytics</span>
+                  <p className={`text-sm font-medium ${location.pathname === '/reports' ? 'text-text-main dark:text-white' : ''}`}>Reportes</p>
                 </Link>
-                <Link className={`flex items-center gap-2 border-b-[3px] pb-3 px-1 min-w-fit ${location.pathname === '/settings' ? 'border-primary' : 'border-transparent group hover:border-primary/30 transition-colors'}`} to="/settings">
+                <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/settings' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/settings">
                   <span className={`material-symbols-outlined ${location.pathname === '/settings' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>settings</span>
-                  <span className={`text-sm font-bold ${location.pathname === '/settings' ? 'text-text-main dark:text-white' : 'text-text-secondary group-hover:text-primary dark:text-gray-400'}`}>Configuración</span>
+                  <p className={`text-sm font-medium ${location.pathname === '/settings' ? 'text-text-main dark:text-white' : ''}`}>Configuración</p>
                 </Link>
               </div>
             </div>

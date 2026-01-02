@@ -39,6 +39,8 @@ const Messages = () => {
   const [chatError, setChatError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const isAdmin = user?.user_metadata?.role === 'admin';
+
   useEffect(() => {
     if (!isSessionLoading && !user) {
       navigate('/login');
@@ -66,7 +68,7 @@ const Messages = () => {
     try {
       // Placeholder data
       const dummyConversations: Conversation[] = [
-        { id: 'conv1', participantName: 'María González', participantAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAOS6Dsw080tA4PGE4aC6QMCLRjikPujnDSLOqtqvKS6iMKEtOZgqRhXQQan2K6yebAyAMPBffTX3xKS7No6Hwfk5e3CYf7_kK1j6CNe1c4o1XyMUmpRliJVxTCoW6_q13r3T6xKStIvZRpaYwlshBVMbMzxSUECSvs2Qj1RCh8-DmztdiUsU9x07YKnqD_yfg8VmIV-kzTuIjRx5nxwzcoMCM8x7LbOVU-7cQ4o1XyMUmpRliJVxTCoW6_q13r3T6xKStIvZRpaYwlshBVMbMzxSUECSvs2Qj1RCh8-DmztdiUsU9x07YKnqD_yfg8VmIV-kzTuIjRx5nxwzcoMCM8x7LbOVU-7cQ4oIt49j09_LBO-aLyB_o3lZ8XnX8vwnBK2eUj58Y', lastMessageContent: 'Hola, quisiera confirmar mi cita...', lastMessageTimestamp: '10:42 AM', unreadCount: 1 },
+        { id: 'conv1', participantName: 'María González', participantAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAOS6Dsw080tA4PGE4aC6QMCLRjikPujnDSLOqtqvKS6iMKEtOZgqRhXQQan2K6yebAyAMPBffTX3xKS7No6Hwfk5e3CYf7_kK1j6CNe1c4o1XyMUmpRliJVxTCoW6_q13r3T6xKStIvZRpaYwlshBVMbMzxSUECSvs2Qj1RCh8-DmztdiUsU9x07YKnqD_yfg8VmIV-kzTuIjRx5nxwzcoMCM8x7LbOVU-7cQ4oIt49j09_LBO-aLyB_o3lZ8XnX8vwnBK2eUj58Y', lastMessageContent: 'Hola, quisiera confirmar mi cita...', lastMessageTimestamp: '10:42 AM', unreadCount: 1 },
         { id: 'conv2', participantName: 'Carlos Rodriguez', participantAvatarUrl: '', lastMessageContent: '¿Tienen disponibilidad para hoy?', lastMessageTimestamp: '09:15 AM', unreadCount: 0 },
         { id: 'conv3', participantName: 'Javier Méndez', participantAvatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDYLpEj0Yew8nNxSSAmPR4hWNZw8EETw_yykqKxEdXZy09BjlJcwMMp-WF64pcNAdjZCH1JhHou1xV7ndKd2TGy3uTjS2sLHOTdh6g0IwYz1C0f-pgl0D2B5uDY5QFIxRl5A1dnZcCn7kp9F2tbDY0pisCE0pAoItLGDqZo4_YuJWDewfYXkb3n3dA0OgPPyRK1Os5EvHS6Mets-vxQ3CLgY4IfFEJxJ6BubOtEDAH5q1_eR0NiZol1gA5eCcBkYwRsPMgSxoqRTNA', lastMessageContent: 'Gracias, nos vemos entonces.', lastMessageTimestamp: 'Ayer', unreadCount: 0 },
         { id: 'conv4', participantName: 'Luisa Perez', participantAvatarUrl: '', lastMessageContent: 'Necesito cancelar mi cita...', lastMessageTimestamp: 'Ayer', unreadCount: 0 },
@@ -261,6 +263,12 @@ const Messages = () => {
             <span className={`material-symbols-outlined ${location.pathname === '/doctors' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>stethoscope</span>
             <p className={`text-sm font-medium ${location.pathname === '/doctors' ? 'text-text-main dark:text-white' : ''}`}>Médicos</p>
           </Link>
+          {isAdmin && (
+            <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/users' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/users">
+              <span className={`material-symbols-outlined ${location.pathname === '/users' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>group</span>
+              <p className={`text-sm font-medium ${location.pathname === '/users' ? 'text-text-main dark:text-white' : ''}`}>Usuarios</p>
+            </Link>
+          )}
           <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/reports' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/reports">
             <span className={`material-symbols-outlined ${location.pathname === '/reports' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>analytics</span>
             <p className={`text-sm font-medium ${location.pathname === '/reports' ? 'text-text-main dark:text-white' : ''}`}>Reportes</p>
@@ -327,10 +335,10 @@ const Messages = () => {
             </button>
             {/* Profile */}
             <div className="flex items-center gap-3 cursor-pointer p-1 pr-2 rounded-full hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors border border-transparent hover:border-[#e7f3f2]">
-              {userAvatar ? (
+              {currentUserAvatar ? (
                 <div
                   className="size-9 rounded-full bg-cover bg-center border border-[#e7f3f2]"
-                  style={{ backgroundImage: `url('${userAvatar}')` }}
+                  style={{ backgroundImage: `url('${currentUserAvatar}')` }}
                   aria-label="Retrato profesional de una doctora sonriendo"
                 ></div>
               ) : (
