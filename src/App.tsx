@@ -12,8 +12,9 @@ import Appointments from "./pages/Appointments";
 import Doctors from "./pages/Doctors";
 import Messages from "./pages/Messages";
 import Settings from "./pages/Settings";
-import Patients from "./pages/Patients"; // Importar la página de Pacientes
-import Profile from "./pages/Profile"; // Importar la página de Perfil
+import Patients from "./pages/Patients";
+import Profile from "./pages/Profile";
+import LandingPage from "./pages/LandingPage"; // Importar la LandingPage
 import { SessionContextProvider } from "./integrations/supabase/session-context";
 
 const queryClient = new QueryClient();
@@ -27,6 +28,7 @@ const App = () => (
         <SessionContextProvider>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/landing" element={<LandingPage />} /> {/* Ruta para la LandingPage */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
@@ -34,8 +36,8 @@ const App = () => (
             <Route path="/appointments" element={<Appointments />} />
             <Route path="/doctors" element={<Doctors />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/patients" element={<Patients />} /> {/* Ruta para la página de Pacientes */}
-            <Route path="/profile" element={<Profile />} /> {/* Ruta para la página de Perfil */}
+            <Route path="/patients" element={<Patients />} />
+            <Route path="/profile" element={<Profile />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -12,9 +12,9 @@ const Index = () => {
       if (user) {
         navigate("/dashboard");
       } else {
-        // If not logged in and not on login/register, redirect to login
-        if (window.location.pathname !== '/login' && window.location.pathname !== '/register') {
-          navigate("/login");
+        // Si no está logueado y no está en login/register/landing, redirigir a landing
+        if (window.location.pathname !== '/login' && window.location.pathname !== '/register' && window.location.pathname !== '/landing') {
+          navigate("/landing");
         }
       }
     }
@@ -28,8 +28,8 @@ const Index = () => {
     );
   }
 
-  // This component should ideally not be rendered if redirection works,
-  // but as a fallback or for unauthenticated users on the root path.
+  // Este componente no debería renderizarse si la redirección funciona,
+  // pero como fallback o para usuarios no autenticados en la ruta raíz.
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="text-center">
