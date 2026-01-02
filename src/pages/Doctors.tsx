@@ -3,14 +3,18 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
+import DoctorDialog from '@/components/DoctorDialog'; // Import the new DoctorDialog component
 
 // Interfaces para la estructura de datos esperada
 interface Doctor {
   id: string;
-  avatarUrl: string;
-  fullName: string;
-  specialty: 'Cardiología' | 'Pediatría' | 'Dermatología' | 'Neurología';
+  user_id?: string; // Optional, if linked to auth.users
+  avatar_url: string;
+  full_name: string;
+  specialty: string; // Changed to string to allow more flexibility
   status: boolean; // true for Activo, false for Inactivo
+  created_at: string;
+  updated_at: string;
 }
 
 const Doctors = () => {
@@ -24,7 +28,10 @@ const Doctors = () => {
   const [doctorsError, setDoctorsError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const doctorsPerPage = 4; // As per the HTML example (1-4 of 12 results)
+  const doctorsPerPage = 4;
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
 
   useEffect(() => {
     if (!isSessionLoading && !user) {
@@ -42,22 +49,13 @@ const Doctors = () => {
     setDoctorsLoading(true);
     setDoctorsError(null);
     try {
-      // Placeholder data
-      const dummyDoctors: Doctor[] = [
-        { id: 'MED-001', avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDwHtixTzdpJCvMAVOQqZUxaPsAbVL-KpQR-e7iTOF_8aOi0vWBIPFagRfWtWc06qZf-I1EE4rpqG3OzV5svDIpihjDe0IYkkwjwdna1nKFVIegRlVrxZ87H7kfrkgn3rU2z8iGDb8yJ2fZ8vAAqaIiCJRnK9wUxYtXKIZY8Lxc-qYHApE2E5hOnN9ufqqsr_JETme0Xq-CarLnTdg80p_oaVpwxvlF5Cb3wLh1Gq8EiECrMwTYDG7qWgC2Q5SwmSbqNZsxgKCnea8', fullName: 'Dr. Ana Martínez', specialty: 'Cardiología', status: true },
-        { id: 'MED-004', avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDlv_WI9Uw_RezWEB_5tz9DrXwbIUPuCUZPWM6s3EfxW_SiNh4Eh-PRmTJOdTYzT35tSgaHvr2aRGCDbqFLj8A_89CuXcEBdLqx3w753RWc3djwcZLUEUvzP5wjuJQKgvUXRT2WtfsKE1WXc5-IRhklbScYNVlZzVnUUcOg6oyJZDIqgnccHoWG2BC11aD9--HKuJypffiv6c9AQzQxwHr2x3Pd6-5dmkfxa43lLAFy6WAQhjyMlqd9EbRiJGdGmcnoLz3t5VNaAMw', fullName: 'Dr. Carlos Ruiz', specialty: 'Pediatría', status: false },
-        { id: 'MED-012', avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBjXKlFPhyeBhVDUU0qd95A41TV5-0Mh4HRT1kWPZMIuyHqxCq92Iz666rXJ46S2xeWvwoGs-CJ-koYv8WG3rvx3Wzq_8sjbIJuwtQGEDO0UZbNJtu_C2EBKXIsBJKNNZ5Qjo0iViDtAisk_1h508ckj950oKaMR2eVB5XPyDf-xGMfMmNUvpJ_cuz6fAJc3yLHYWYeWh_uA09xfErXM5DpD-2_I6ts2258bn_6WsOY_TCM7AX2jWOxsBKVtGCUEfBO8pQHA_HYfg4', fullName: 'Dra. Sofia López', specialty: 'Dermatología', status: true },
-        { id: 'MED-008', avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDgl60XRt4mk67_vE8LgHjaiq1a3lVnXWuPbQ-WhcwrCm3XNVY6qrNdLGXfoHF6VGKIsrAnn5euyr_pLGPW3Eqv7dmfKDDUMnSri5XiLHLhZUTii3oKCjWXh0MxV2q-vW-Bx0zS3qtwR3V_5QGK7hGhFt_sKSNKWGpi-hV-Uup38MxWBJoEK-qVPXc-V1Oh97oot614hdGmfsq7BDm5KWWvszhYlY_APkeDzQdKOdxbg8b3PBMPTuuu9ku6JgF1VbSDx8cTnYZuCeM', fullName: 'Dr. Miguel Ángel', specialty: 'Neurología', status: true },
-        { id: 'MED-002', avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDgl60XRt4mk67_vE8LgHjaiq1a3lVnXWuPbQ-WhcwrCm3XNVY6qrNdLGXfoHF6VGKIsrAnn5euyr_pLGPW3Eqv7dmfKDDUMnSri5XiLHLhZUTii3oKCjWXh0MxV2q-vW-Bx0zS3qtwR3V_5QGK7hGhFt_sKSNKWGpi-hV-Uup38MxWBJoEK-qVPXc-V1Oh97oot614hdGmfsq7BDm5KWWvszhYlY_APkeDzQdKOdxbg8b3PBMPTuuu9ku6JgF1VbSDx8cTnYZuCeM', fullName: 'Dra. Laura Pérez', specialty: 'Cardiología', status: true },
-        { id: 'MED-003', avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDlv_WI9Uw_RezWEB_5tz9DrXwbIUPuCUZPWM6s3EfxW_SiNh4Eh-PRmTJOdTYzT35tSgaHvr2aRGCDbqFLj8A_89CuXcEBdLqx3w753RWc3djwcZLUEUvzP5wjuJQKgvUXRT2WtfsKE1WXc5-IRhklbScYNVlZzVnUUcOg6oyJZDIqgnccHoWG2BC11aD9--HKuJypffiv6c9AQzQxwHr2x3Pd6-5dmkfxa43lLAFy6WAQhjyMlqd9EbRiJGdGmcnoLz3t5VNaAMw', fullName: 'Dr. Juan García', specialty: 'Pediatría', status: false },
-        { id: 'MED-005', avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDwHtixTzdpJCvMAVOQqZUxaPsAbVL-KpQR-e7iTOF_8aOi0vWBIPFagRfWtWc06qZf-I1EE4rpqG3OzV5svDIpihjDe0IYkkwjwdna1nKFVIegRlVrxZ87H7kfrkgn3rU2z8iGDb8yJ2fZ8vwnBK2eUj58Y', fullName: 'Dra. Carmen Soto', specialty: 'Dermatología', status: true },
-        { id: 'MED-006', avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBjXKlFPhyeBhVDUU0qd95A41TV5-0Mh4HRT1kWPZMIuyHqxCq92Iz666rXJ46S2xeWvwoGs-CJ-koYv8WG3rvx3Wzq_8sjbIJuwtQGEDO0UZbNJtu_C2EBKXIsBJKNNZ5Qjo0iViDtAisk_1h508ckj950oKaMR2eVB5XPyDf-xGMfMmNUvpJ_cuz6fAJc3yLHYWYeWh_uA09xfErXM5DpD-2_I6ts2258bn_6WsOY_TCM7AX2jWOxsBKVtGCUEfBO8pQHA_HYfg4', fullName: 'Dr. Pedro Gómez', specialty: 'Neurología', status: true },
-        { id: 'MED-007', avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDgl60XRt4mk67_vE8LgHjaiq1a3lVnXWuPbQ-WhcwrCm3XNVY6qrNdLGXfoHF6VGKIsrAnn5euyr_pLGPW3Eqv7dmfKDDUMnSri5XiLHLhZUTii3oKCjWXh0MxV2q-vW-Bx0zS3qtwR3V_5QGK7hGhFt_sKSNKWGpi-hV-Uup38MxWBJoEK-qVPXc-V1Oh97oot614hdGmfsq7BDm5KWWvszhYlY_APkeDzQdKOdxbg8b3PBMPTuuu9ku6JgF1VbSDx8cTnYZuCeM', fullName: 'Dra. Elena Torres', specialty: 'Cardiología', status: true },
-        { id: 'MED-009', avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDwHtixTzdpJCvMAVOQqZUxaPsAbVL-KpQR-e7iTOF_8aOi0vWBIPFagRfWtWc06qZf-I1EE4rpqG3OzV5svDIpihjDe0IYkkwjwdna1nKFVIegRlVrxZ87H7kfrkgn3rU2z8iGDb8yJ2fZ8vwnBK2eUj58Y', fullName: 'Dr. Roberto Castro', specialty: 'Pediatría', status: false },
-        { id: 'MED-010', avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDlv_WI9Uw_RezWEB_5tz9DrXwbIUPuCUZPWM6s3EfxW_SiNh4Eh-PRmTJOdTYzT35tSgaHvr2aRGCDbqFLj8A_89CuXcEBdLqx3w753RWc3djwcZLUEUvzP5wjuJQKgvUXRT2WtfsKE1WXc5-IRhklbScYNVlZzVnUUcOg6oyJZDIqgnccHoWG2BC11aD9--HKuJypffiv6c9AQzQxwHr2x3Pd6-5dmkfxa43lLAFy6WAQhjyMlqd9EbRiJGdGmcnoLz3t5VNaAMw', fullName: 'Dra. Marta Vidal', specialty: 'Dermatología', status: true },
-        { id: 'MED-011', avatarUrl: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBjXKlFPhyeBhVDUU0qd95A41TV5-0Mh4HRT1kWPZMIuyHqxCq92Iz666rXJ46S2xeWvwoGs-CJ-koYv8WG3rvx3Wzq_8sjbIJuwtQGEDO0UZbNJtu_C2EBKXIsBJKNNZ5Qjo0iViDtAisk_1h508ckj950oKaMR2eVB5XPyDf-xGMfMmNUvpJ_cuz6fAJc3yLHYWYeWh_uA09xfErXM5DpD-2_I6ts2258bn_6WsOY_TCM7AX2jWOxsBKVtGCUEfBO8pQHA_HYfg4', fullName: 'Dr. Francisco Soler', specialty: 'Neurología', status: true },
-      ];
-      setAllDoctors(dummyDoctors);
+      const { data, error } = await supabase
+        .from('doctors')
+        .select('*')
+        .order('full_name', { ascending: true });
+
+      if (error) throw error;
+      setAllDoctors(data as Doctor[]);
 
     } catch (error: any) {
       console.error('Error fetching doctors data:', error);
@@ -73,7 +71,7 @@ const Doctors = () => {
 
     if (searchQuery) {
       tempDoctors = tempDoctors.filter(doctor =>
-        doctor.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        doctor.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         doctor.specialty.toLowerCase().includes(searchQuery.toLowerCase()) ||
         doctor.id.toLowerCase().includes(searchQuery.toLowerCase())
       );
@@ -94,19 +92,76 @@ const Doctors = () => {
   };
 
   const handleAddDoctor = () => {
-    showSuccess('Funcionalidad "Agregar Médico" en desarrollo.');
+    setEditingDoctor(null); // Clear any previous editing state
+    setIsDialogOpen(true);
   };
 
-  const handleEditDoctor = (doctorId: string) => {
-    showSuccess(`Funcionalidad "Editar Médico ${doctorId}" en desarrollo.`);
+  const handleEditDoctor = (doctor: Doctor) => {
+    setEditingDoctor(doctor);
+    setIsDialogOpen(true);
   };
 
-  const handleDeleteDoctor = (doctorId: string) => {
-    showSuccess(`Funcionalidad "Eliminar Médico ${doctorId}" en desarrollo.`);
+  const handleDeleteDoctor = async (doctorId: string) => {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar a este médico?')) {
+      return;
+    }
+    try {
+      const { error } = await supabase
+        .from('doctors')
+        .delete()
+        .eq('id', doctorId);
+
+      if (error) throw error;
+
+      showSuccess('Médico eliminado correctamente.');
+      fetchDoctorsData(); // Refresh the list
+    } catch (error: any) {
+      console.error('Error deleting doctor:', error);
+      showError('Error al eliminar el médico: ' + error.message);
+    }
   };
 
-  const handleToggleStatus = (doctorId: string) => {
-    showSuccess(`Funcionalidad "Cambiar estado de Médico ${doctorId}" en desarrollo.`);
+  const handleToggleStatus = async (doctor: Doctor) => {
+    try {
+      const { error } = await supabase
+        .from('doctors')
+        .update({ status: !doctor.status })
+        .eq('id', doctor.id);
+
+      if (error) throw error;
+
+      showSuccess(`Estado de ${doctor.full_name} actualizado a ${!doctor.status ? 'Activo' : 'Inactivo'}.`);
+      fetchDoctorsData(); // Refresh the list
+    } catch (error: any) {
+      console.error('Error toggling doctor status:', error);
+      showError('Error al cambiar el estado del médico: ' + error.message);
+    }
+  };
+
+  const handleSaveDoctor = async (doctorData: Omit<Doctor, 'id' | 'created_at' | 'updated_at'>, id?: string) => {
+    try {
+      if (id) {
+        // Update existing doctor
+        const { error } = await supabase
+          .from('doctors')
+          .update({ ...doctorData, updated_at: new Date().toISOString() })
+          .eq('id', id);
+        if (error) throw error;
+        showSuccess('Médico actualizado correctamente.');
+      } else {
+        // Add new doctor
+        const { error } = await supabase
+          .from('doctors')
+          .insert({ ...doctorData, created_at: new Date().toISOString(), updated_at: new Date().toISOString() });
+        if (error) throw error;
+        showSuccess('Médico agregado correctamente.');
+      }
+      setIsDialogOpen(false);
+      fetchDoctorsData(); // Refresh the list
+    } catch (error: any) {
+      console.error('Error saving doctor:', error);
+      showError('Error al guardar el médico: ' + error.message);
+    }
   };
 
   const totalPages = Math.ceil(allDoctors.length / doctorsPerPage);
@@ -148,7 +203,7 @@ const Doctors = () => {
   const userRole = user?.user_metadata?.role || 'Admin';
   const userAvatar = user?.user_metadata?.avatar_url || 'https://lh3.googleusercontent.com/aida-public/AB6AXuBKGJqOrxKC8dOGnL2B3rcuN8cbystShMdVLZ1f22GeobGXHdn17h731ohnBgSFGJzHSaFFsKSuto3ONj63pIfPpeClcp3tWAb-bclE_Hdvuy0R-QbHkMZiM6WYYc3nXNPjiDH0EMCfTWpN1A8GBrVRx2om-uuCNIMSN-DSrG8z2WZluh5jVJxmObR7BrX_OOftM87dob0SyNkuMtcrKkmQBolg7ESQ8bWASHic7KVtOqf3B-tpEFB-W_Ojbd_zMuoMOU5VqJiH_A'; // Placeholder
 
-  const getSpecialtyBadgeClasses = (specialty: Doctor['specialty']) => {
+  const getSpecialtyBadgeClasses = (specialty: string) => {
     switch (specialty) {
       case 'Cardiología': return 'bg-badge-blue-light text-badge-blue-light-text dark:bg-badge-blue-dark-bg dark:text-badge-blue-dark-text';
       case 'Pediatría': return 'bg-badge-emerald-light text-badge-emerald-light-text dark:bg-badge-emerald-dark-bg dark:text-badge-emerald-dark-text';
@@ -360,7 +415,7 @@ const Doctors = () => {
         <main className="flex-1 overflow-y-auto px-4 md:px-8 pb-10">
           {doctorsLoading ? (
             renderLoadingState()
-          ) : filteredDoctors.length === 0 && !searchQuery ? (
+          ) : allDoctors.length === 0 && !searchQuery ? (
             renderEmptyState()
           ) : (
             <div className="max-w-6xl mx-auto flex flex-col gap-6 mt-4">
@@ -429,13 +484,13 @@ const Doctors = () => {
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div
                                 className="size-10 rounded-full bg-cover bg-center border border-border-light dark:border-border-dark"
-                                style={{ backgroundImage: `url('${doctor.avatarUrl}')` }}
+                                style={{ backgroundImage: `url('${doctor.avatar_url}')` }}
                                 aria-label="Doctor portrait"
                               ></div>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex flex-col">
-                                <span className="text-sm font-bold text-slate-900 dark:text-white">{doctor.fullName}</span>
+                                <span className="text-sm font-bold text-slate-900 dark:text-white">{doctor.full_name}</span>
                                 <span className="text-xs text-slate-500 dark:text-slate-400">ID: {doctor.id}</span>
                               </div>
                             </td>
@@ -450,7 +505,7 @@ const Doctors = () => {
                                   type="checkbox"
                                   className="sr-only peer"
                                   checked={doctor.status}
-                                  onChange={() => handleToggleStatus(doctor.id)}
+                                  onChange={() => handleToggleStatus(doctor)}
                                 />
                                 <div className="relative w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
                                 <span className={`ml-3 text-sm font-medium ${doctor.status ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500'}`}>
@@ -460,7 +515,7 @@ const Doctors = () => {
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right">
                               <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleEditDoctor(doctor.id)} className="p-2 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Editar">
+                                <button onClick={() => handleEditDoctor(doctor)} className="p-2 text-slate-500 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Editar">
                                   <span className="material-symbols-outlined text-[20px]">edit</span>
                                 </button>
                                 <button onClick={() => handleDeleteDoctor(doctor.id)} className="p-2 text-slate-500 hover:text-red-500 hover:bg-hover-red-light-bg dark:hover:bg-hover-red-dark-bg rounded-lg transition-colors" title="Eliminar">
@@ -501,6 +556,12 @@ const Doctors = () => {
           )}
         </main>
       </div>
+      <DoctorDialog
+        isOpen={isDialogOpen}
+        onClose={() => setIsDialogOpen(false)}
+        onSave={handleSaveDoctor}
+        doctor={editingDoctor}
+      />
     </div>
   );
 };
