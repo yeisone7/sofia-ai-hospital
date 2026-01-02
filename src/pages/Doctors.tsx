@@ -174,6 +174,12 @@ const Doctors = () => {
     setCurrentPage(prev => Math.min(totalPages, prev + 1));
   };
 
+  const getInitials = (name: string) => {
+    const parts = name.split(' ');
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+  };
+
   if (isSessionLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background-light dark:bg-background-dark">
@@ -482,11 +488,24 @@ const Doctors = () => {
                         filteredDoctors.map((doctor) => (
                           <tr key={doctor.id} className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div
-                                className="size-10 rounded-full bg-cover bg-center border border-border-light dark:border-border-dark"
-                                style={{ backgroundImage: `url('${doctor.avatar_url}')` }}
-                                aria-label="Doctor portrait"
-                              ></div>
+                              {doctor.avatar_url ? (
+                                <img
+                                  src={doctor.avatar_url}
+                                  alt={doctor.full_name}
+                                  className="size-10 rounded-full object-cover border border-border-light dark:border-border-dark"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none'; // Hide broken image
+                                    const parent = e.currentTarget.parentElement;
+                                    if (parent) {
+                                      parent.innerHTML = `<div class="size-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">${getInitials(doctor.full_name)}</div>`;
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <div className="size-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center text-blue-600 dark:text-blue-300 font-bold">
+                                  {getInitials(doctor.full_name)}
+                                </div>
+                              )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
                               <div className="flex flex-col">
@@ -555,13 +574,13 @@ const Doctors = () => {
             </div>
           )}
         </main>
-      </div>
       <DoctorDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
         onSave={handleSaveDoctor}
         doctor={editingDoctor}
       />
+    </div>
     </div>
   );
 };
