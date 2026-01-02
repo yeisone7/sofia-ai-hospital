@@ -97,7 +97,7 @@ const DoctorDialog: React.FC<DoctorDialogProps> = ({ isOpen, onClose, onSave, do
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExtension}`;
       const filePath = `doctor_avatars/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage // Eliminado 'data'
+      const { error: uploadError } = await supabase.storage
         .from('doctor-avatars') // This bucket needs to be created in Supabase
         .upload(filePath, avatarFile, {
           cacheControl: '3600',

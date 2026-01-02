@@ -148,16 +148,16 @@ const Appointments = () => {
     }
   };
 
-  const handleRescheduleAppointment = async (appointmentId: string) => {
+  const handleRescheduleAppointment = async (_appointmentId: string) => { // Renombrado a _appointmentId
     showSuccess('Funcionalidad de reprogramación en desarrollo.');
   };
 
-  const handleChangeDoctor = async (appointmentId: string) => {
+  const handleChangeDoctor = async (_appointmentId: string) => { // Renombrado a _appointmentId
     showSuccess('Funcionalidad de cambio de médico en desarrollo.');
   };
 
-  const handleViewAppointmentDetails = (appointmentId: string) => {
-    showSuccess(`Ver detalles de la cita ${appointmentId} en desarrollo.`);
+  const handleViewAppointmentDetails = (_appointmentId: string) => { // Renombrado a _appointmentId
+    showSuccess(`Ver detalles de la cita ${_appointmentId} en desarrollo.`);
   };
 
   const totalPages = Math.ceil(allAppointments.length / appointmentsPerPage);
@@ -194,7 +194,7 @@ const Appointments = () => {
   }
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
-  const userRole = user?.user_metadata?.role || 'Admin';
+  const _userRole = user?.user_metadata?.role || 'Admin'; // Renombrado a _userRole
   const userAvatar = user?.user_metadata?.avatar_url || null;
 
   const getStatusBadgeClasses = (status: Appointment['status']) => {
