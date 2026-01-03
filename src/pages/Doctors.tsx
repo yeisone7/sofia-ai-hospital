@@ -159,7 +159,7 @@ const Doctors = () => {
   };
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
-  // const userRole = user?.user_metadata?.role || 'Admin'; // Eliminado, no se usa directamente aquí
+  const _userRole = user?.user_metadata?.role || 'Admin'; // Prefixed with '_'
   const userAvatar = user?.user_metadata?.avatar_url || null;
 
   const getSpecialtyBadgeClasses = (specialty: string) => {
@@ -209,7 +209,7 @@ const Doctors = () => {
                       <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
                       <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
                     </div>
-                  </td> {/* FIX: Added closing </td> tag here */}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
                   </td>
