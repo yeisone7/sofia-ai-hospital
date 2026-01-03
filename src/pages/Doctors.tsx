@@ -159,7 +159,6 @@ const Doctors = () => {
   };
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
-  const _userRole = user?.user_metadata?.role || 'Admin'; // Prefixed with '_'
   const userAvatar = user?.user_metadata?.avatar_url || null;
 
   const getSpecialtyBadgeClasses = (specialty: string) => {
