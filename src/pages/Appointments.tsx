@@ -28,7 +28,7 @@ const Appointments = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const appointmentsPerPage = 10;
-  const isAdmin = user?.user_metadata?.role === 'admin';
+  const _isAdmin = user?.user_metadata?.role === 'admin'; // Renamed to _isAdmin
 
   useEffect(() => {
     if (!isSessionLoading && !user) {
@@ -197,7 +197,7 @@ const Appointments = () => {
   }
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
-  const _userRole = user?.user_metadata?.role || 'Admin'; // Prefixed with '_'
+  const _userRole = user?.user_metadata?.role || 'Admin';
   const userAvatar = user?.user_metadata?.avatar_url || null;
 
   const getStatusBadgeClasses = (status: Appointment['status']) => {
@@ -328,7 +328,7 @@ const Appointments = () => {
             <span className="material-symbols-outlined text-text-secondary group-hover:text-primary text-[20px]">stethoscope</span>
             <span className="text-text-secondary group-hover:text-primary dark:text-gray-400 text-sm font-bold">Médicos</span>
           </Link>
-          {isAdmin && (
+          {_isAdmin && (
             <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/users' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/users">
               <span className={`material-symbols-outlined ${location.pathname === '/users' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>group</span>
               <span className={`text-sm font-medium ${location.pathname === '/users' ? 'text-text-main dark:text-white' : ''}`}>Usuarios</span>
@@ -398,7 +398,7 @@ const Appointments = () => {
             <span className={`material-symbols-outlined ${location.pathname === '/doctors' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>stethoscope</span>
             <p className={`text-sm font-medium ${location.pathname === '/doctors' ? 'text-text-main dark:text-white' : ''}`}>Médicos</p>
           </Link>
-          {isAdmin && (
+          {_isAdmin && (
             <Link className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/users' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`} to="/users">
               <span className={`material-symbols-outlined ${location.pathname === '/users' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>group</span>
               <p className={`text-sm font-medium ${location.pathname === '/users' ? 'text-text-main dark:text-white' : ''}`}>Usuarios</p>

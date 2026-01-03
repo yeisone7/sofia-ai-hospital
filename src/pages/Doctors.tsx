@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
@@ -20,7 +20,7 @@ const Doctors = () => {
   const doctorsPerPage = 4;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingDoctor, setEditingDoctor] = useState<Doctor | null>(null);
-  const isAdmin = user?.user_metadata?.role === 'admin';
+  const _isAdmin = user?.user_metadata?.role === 'admin'; // Renamed to _isAdmin
 
   useEffect(() => {
     if (!isSessionLoading && !user) {
@@ -159,7 +159,7 @@ const Doctors = () => {
   };
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
-  const _userRole = user?.user_metadata?.role || 'Admin'; // Renamed to _userRole
+  const _userRole = user?.user_metadata?.role || 'Admin';
   const userAvatar = user?.user_metadata?.avatar_url || null;
 
   const getSpecialtyBadgeClasses = (specialty: string) => {
@@ -178,7 +178,7 @@ const Doctors = () => {
   };
 
   const renderLoadingState = () => (
-    <React.Fragment> {/* Explicit Fragment */}
+    <>
       <div className="max-w-6xl mx-auto flex flex-col gap-6 mt-4 animate-pulse">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="h-10 w-full md:max-w-md bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
@@ -237,11 +237,11 @@ const Doctors = () => {
           </div>
         </div>
       </div>
-    </React.Fragment>
+    </>
   );
 
   const renderEmptyState = () => (
-    <React.Fragment> {/* Explicit Fragment */}
+    <>
       <div className="max-w-6xl mx-auto flex flex-col gap-6 mt-4">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="relative group w-full md:max-w-md">
@@ -284,7 +284,7 @@ const Doctors = () => {
           </button>
         </div>
       </div>
-    </React.Fragment>
+    </>
   );
 
   if (isSessionLoading) {
@@ -362,7 +362,7 @@ const Doctors = () => {
             <span className={`material-symbols-outlined ${location.pathname === '/doctors' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>stethoscope</span>
             <p className={`text-sm font-medium ${location.pathname === '/doctors' ? 'text-text-main dark:text-white' : ''}`}>Médicos</p>
           </Link>
-          {isAdmin && (
+          {_isAdmin && (
             <Link
               className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/users' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
               to="/users"
