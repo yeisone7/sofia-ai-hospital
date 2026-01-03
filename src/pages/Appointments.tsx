@@ -1,12 +1,10 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { useSession } from '@/integrations/supabase/session-context';
+import { supabase } from '@/integrations/supabase/client';
 import { showError, showSuccess } from '@/utils/toast';
 import { Appointment } from '@/types/common'; // Importar Appointment desde el archivo compartido
 import { getInitials } from '@/lib/utils'; // Reintroducido
-// Eliminadas importaciones no utilizadas: Button, Card, Table, Avatar, Badge, Input, DropdownMenu, MoreHorizontal, Calendar as CalendarIcon, User as UserIcon, CheckCircle, XCircle
-// Si estos componentes se necesitan en el futuro, deberán ser reintroducidos junto con su uso en el JSX.
 
 interface Doctor {
   id: string;
@@ -197,6 +195,7 @@ const Appointments = () => {
   }
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
+  const _userRole = user?.user_metadata?.role || 'Admin';
   const userAvatar = user?.user_metadata?.avatar_url || null;
 
   const getStatusBadgeClasses = (status: Appointment['status']) => {
@@ -466,10 +465,7 @@ const Appointments = () => {
               <span className="material-symbols-outlined">notifications</span>
               <span className="absolute top-1.5 right-1.5 size-2 bg-red-500 rounded-full border-2 border-background-light"></span>
             </button>
-            <Link
-              to="/help"
-              className="flex items-center justify-center gap-2 bg-white dark:bg-surface-dark border border-[#e7f3f2] dark:border-[#2a3c3b] rounded-lg px-3 py-2 text-sm font-medium text-text-main dark:text-white hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors"
-            >
+            <Link to="/help" className="flex items-center justify-center gap-2 bg-white dark:bg-surface-dark border border-[#e7f3f2] dark:border-[#2a3c3b] rounded-lg px-3 py-2 text-sm font-medium text-text-main dark:text-white hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors">
               <span className="material-symbols-outlined text-[20px]">help</span>
               <span>Ayuda</span>
             </Link>

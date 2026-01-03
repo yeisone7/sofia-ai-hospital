@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
@@ -159,6 +159,7 @@ const Doctors = () => {
   };
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
+  // const userRole = user?.user_metadata?.role || 'Admin'; // Eliminado, no se usa directamente aquí
   const userAvatar = user?.user_metadata?.avatar_url || null;
 
   const getSpecialtyBadgeClasses = (specialty: string) => {
@@ -268,7 +269,7 @@ const Doctors = () => {
       </div>
       <div className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-dashed border-border-light dark:border-border-dark p-12 flex flex-col items-center justify-center text-center min-h-[400px]">
         <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-full mb-4">
-          <span className="material-symbols-outlined text-4xl">person_off</span>
+          <span className="material-symbols-outlined text-slate-400 text-4xl">person_off</span>
         </div>
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">No hay médicos registrados</h3>
         <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-xs">Comienza agregando al primer miembro de tu equipo médico.</p>
@@ -387,7 +388,6 @@ const Doctors = () => {
             </Link>
           </div>
         </nav>
-        {/* User Logout */}
         <div className="p-4 border-t border-[#e7f3f2] dark:border-[#2a3c3b]">
           <button
             onClick={handleLogout}
@@ -398,9 +398,7 @@ const Doctors = () => {
           </button>
         </div>
       </aside>
-      {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark relative">
-        {/* Mobile Header */}
         <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-surface-light dark:bg-surface-dark border-b border-[#e7f3f2] dark:border-[#2a3c3b]">
           <div className="flex items-center gap-2">
             <button className="p-2 text-text-main hover:bg-gray-100 rounded-lg">
@@ -420,7 +418,6 @@ const Doctors = () => {
             </div>
           )}
         </header>
-        {/* Top Bar Desktop */}
         <header className="hidden lg:flex items-center justify-between px-8 py-5 border-b border-transparent">
           <div>
             <nav className="flex text-sm text-text-secondary mb-1">
@@ -575,6 +572,7 @@ const Doctors = () => {
             </div>
           )}
         </main>
+      </div>
       <DoctorDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
