@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
@@ -208,8 +208,7 @@ const Doctors = () => {
                     <div className="flex flex-col gap-1">
                       <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
                       <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                    </div>
-                  </td>
+                    </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
                   </td>
@@ -269,7 +268,7 @@ const Doctors = () => {
       </div>
       <div className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-dashed border-border-light dark:border-border-dark p-12 flex flex-col items-center justify-center text-center min-h-[400px]">
         <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-full mb-4">
-          <span className="material-symbols-outlined text-slate-400 text-4xl">person_off</span>
+          <span className="material-symbols-outlined text-4xl">person_off</span>
         </div>
         <h3 className="text-lg font-bold text-slate-900 dark:text-white">No hay médicos registrados</h3>
         <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-xs">Comienza agregando al primer miembro de tu equipo médico.</p>

@@ -29,6 +29,8 @@ Este documento resume el estado actual del desarrollo de la aplicación "Laura A
 - [x] **Mensajes**:
     - [x] Panel izquierdo con lista de conversaciones (datos de Supabase, enriquecidos con nombre de paciente).
     - [x] Panel derecho con conversación (datos de Supabase), burbujas diferenciadas, avatares y auto-scroll.
+    - [x] Integración real de envío de mensajes desde la UI a través de la Edge Function.
+    - [ ] Lógica para marcar mensajes como leídos.
 - [x] **Citas**:
     - [x] Tarjetas resumen (datos de Supabase).
     - [x] Tabla con datos de Supabase.
@@ -95,6 +97,11 @@ Este documento resume el estado actual del desarrollo de la aplicación "Laura A
 - [x] Envío de mensajes de recordatorio por Twilio.
 - [x] Marcado de `reminder_sent = true` después de enviar el recordatorio.
 
+#### C. `send-whatsapp-message`
+- [x] Creación de la función Edge Function (`supabase/functions/send-whatsapp-message/index.ts`).
+- [x] Envío de mensajes salientes a través de Twilio.
+- [x] Persistencia de mensajes salientes en la tabla `messages`.
+
 ### 8. Tecnologías
 - [x] **Frontend**: React 18, Vite, Tailwind CSS, shadcn/ui, React Router.
 - [x] **Backend**: Supabase (PostgreSQL, Auth, Storage, Edge Functions).
@@ -114,7 +121,6 @@ Este documento resume el estado actual del desarrollo de la aplicación "Laura A
 
 ### 4. Dashboard – Módulos
 - [ ] **Mensajes**:
-    - [ ] Integración real de envío de mensajes desde la UI a través de la Edge Function.
     - [ ] Lógica para marcar mensajes como leídos.
 - [ ] **Citas**:
     - [ ] Implementación completa de la lógica de "Reprogramar" (requiere modales y lógica de selección).

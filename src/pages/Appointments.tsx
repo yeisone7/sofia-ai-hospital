@@ -1,10 +1,28 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
-import { useSession } from '@/integrations/supabase/session-context';
 import { supabase } from '@/integrations/supabase/client';
+import { useSession } from '@/integrations/supabase/session-context';
 import { showError, showSuccess } from '@/utils/toast';
 import { Appointment } from '@/types/common'; // Importar Appointment desde el archivo compartido
 import { getInitials } from '@/lib/utils'; // Reintroducido
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { MoreHorizontal, Calendar as CalendarIcon, User as UserIcon, CheckCircle, XCircle } from 'lucide-react';
+// import Sidebar from '@/components/Sidebar'; // Assuming these are not yet created or needed for this fix
+// import Header from '@/components/Header'; // Assuming these are not yet created or needed for this fix
+
 
 interface Doctor {
   id: string;
@@ -195,7 +213,7 @@ const Appointments = () => {
   }
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
-  const _userRole = user?.user_metadata?.role || 'Admin';
+  const _userRole = user?.user_metadata?.role || 'Admin'; // Fix 3: Prefixed with '_'
   const userAvatar = user?.user_metadata?.avatar_url || null;
 
   const getStatusBadgeClasses = (status: Appointment['status']) => {
