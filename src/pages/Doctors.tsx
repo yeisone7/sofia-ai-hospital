@@ -159,7 +159,7 @@ const Doctors = () => {
   };
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
-  // const userRole = user?.user_metadata?.role || 'Admin'; // Eliminado, no se usa directamente aquí
+  const _userRole = user?.user_metadata?.role || 'Admin'; // Renamed to _userRole
   const userAvatar = user?.user_metadata?.avatar_url || null;
 
   const getSpecialtyBadgeClasses = (specialty: string) => {
@@ -178,109 +178,113 @@ const Doctors = () => {
   };
 
   const renderLoadingState = () => (
-    <div className="max-w-6xl mx-auto flex flex-col gap-6 mt-4 animate-pulse">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="h-10 w-full md:max-w-md bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-        <div className="flex items-center gap-3">
-          <div className="h-11 w-28 bg-gray-200 dark:bg-gray-700 rounded-xl hidden md:block"></div>
-          <div className="h-11 w-full sm:w-40 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+    <React.Fragment> {/* Explicit Fragment */}
+      <div className="max-w-6xl mx-auto flex flex-col gap-6 mt-4 animate-pulse">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="h-10 w-full md:max-w-md bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+          <div className="flex items-center gap-3">
+            <div className="h-11 w-28 bg-gray-200 dark:bg-gray-700 rounded-xl hidden md:block"></div>
+            <div className="h-11 w-full sm:w-40 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+          </div>
         </div>
-      </div>
-      <div className="bg-surface-light dark:bg-surface-dark rounded-2xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden flex flex-col">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-border-light dark:border-border-dark bg-slate-50/50 dark:bg-white/5">
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-16"></th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider"></th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider"></th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider"></th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right"></th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border-light dark:divide-border-dark">
-              {[...Array(doctorsPerPage)].map((_, i) => (
-                <tr key={i} className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="size-10 rounded-full bg-gray-200 dark:bg-gray-700"></div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-col gap-1">
-                      <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-                      <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <div className="size-8 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-                      <div className="size-8 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-                    </div>
-                  </td>
+        <div className="bg-surface-light dark:bg-surface-dark rounded-2xl shadow-sm border border-border-light dark:border-border-dark overflow-hidden flex flex-col">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-border-light dark:border-border-dark bg-slate-50/50 dark:bg-white/5">
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider w-16"></th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider"></th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider"></th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider"></th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-right"></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="px-6 py-4 border-t border-border-light dark:border-border-dark flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
-          <div className="flex gap-2">
-            <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-            <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+              </thead>
+              <tbody className="divide-y divide-border-light dark:divide-border-dark">
+                {[...Array(doctorsPerPage)].map((_, i) => (
+                  <tr key={i} className="group hover:bg-slate-50 dark:hover:bg-white/5 transition-colors">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="size-10 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex flex-col gap-1">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <div className="size-8 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                        <div className="size-8 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <div className="px-6 py-4 border-t border-border-light dark:border-border-dark flex items-center justify-between bg-slate-50/50 dark:bg-white/5">
+            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+            <div className="flex gap-2">
+              <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+              <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+            </div>
           </div>
         </div>
       </div>
-    </div>
+    </React.Fragment>
   );
 
   const renderEmptyState = () => (
-    <div className="max-w-6xl mx-auto flex flex-col gap-6 mt-4">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="relative group w-full md:max-w-md">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 group-focus-within:text-primary transition-colors">search</span>
+    <React.Fragment> {/* Explicit Fragment */}
+      <div className="max-w-6xl mx-auto flex flex-col gap-6 mt-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="relative group w-full md:max-w-md">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="material-symbols-outlined text-slate-400 dark:text-slate-500 group-focus-within:text-primary transition-colors">search</span>
+            </div>
+            <input
+              className="block w-full pl-10 pr-3 py-2.5 border-none rounded-xl bg-white dark:bg-surface-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/50 shadow-sm text-sm transition-all"
+              placeholder="Buscar por nombre, especialidad o ID..."
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
-          <input
-            className="block w-full pl-10 pr-3 py-2.5 border-none rounded-xl bg-white dark:bg-surface-dark text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-primary/50 shadow-sm text-sm transition-all"
-            placeholder="Buscar por nombre, especialidad o ID..."
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+          <div className="flex items-center gap-3">
+            <button className="hidden md:flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-surface-dark text-slate-700 dark:text-slate-200 text-sm font-bold border border-transparent hover:border-border-light dark:hover:border-border-dark shadow-sm hover:shadow transition-all">
+              <span className="material-symbols-outlined text-[20px]">filter_list</span>
+              <span>Filtros</span>
+            </button>
+            <button
+              onClick={handleAddDoctor}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-teal-950 text-sm font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all transform active:scale-95"
+            >
+              <span className="material-symbols-outlined text-[20px]">add</span>
+              <span>Agregar Médico</span>
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <button className="hidden md:flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-surface-dark text-slate-700 dark:text-slate-200 text-sm font-bold border border-transparent hover:border-border-light dark:hover:border-border-dark shadow-sm hover:shadow transition-all">
-            <span className="material-symbols-outlined text-[20px]">filter_list</span>
-            <span>Filtros</span>
-          </button>
+        <div className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-dashed border-border-light dark:border-border-dark p-12 flex flex-col items-center justify-center text-center min-h-[400px]">
+          <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-full mb-4">
+            <span className="material-symbols-outlined text-4xl">person_off</span>
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">No hay médicos registrados</h3>
+          <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-xs">Comienza agregando al primer miembro de tu equipo médico.</p>
           <button
             onClick={handleAddDoctor}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-teal-950 text-sm font-bold shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all transform active:scale-95"
+            className="mt-5 text-primary font-bold hover:underline text-sm"
           >
-            <span className="material-symbols-outlined text-[20px]">add</span>
-            <span>Agregar Médico</span>
+            Agregar Médico ahora
           </button>
         </div>
       </div>
-      <div className="bg-surface-light dark:bg-surface-dark rounded-2xl border border-dashed border-border-light dark:border-border-dark p-12 flex flex-col items-center justify-center text-center min-h-[400px]">
-        <div className="bg-slate-50 dark:bg-white/5 p-4 rounded-full mb-4">
-          <span className="material-symbols-outlined text-slate-400 text-4xl">person_off</span>
-        </div>
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white">No hay médicos registrados</h3>
-        <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-xs">Comienza agregando al primer miembro de tu equipo médico.</p>
-        <button
-          onClick={handleAddDoctor}
-          className="mt-5 text-primary font-bold hover:underline text-sm"
-        >
-          Agregar Médico ahora
-        </button>
-      </div>
-    </div>
+    </React.Fragment>
   );
 
   if (isSessionLoading) {
@@ -388,6 +392,7 @@ const Doctors = () => {
             </Link>
           </div>
         </nav>
+        {/* User Logout */}
         <div className="p-4 border-t border-[#e7f3f2] dark:border-[#2a3c3b]">
           <button
             onClick={handleLogout}
@@ -398,7 +403,9 @@ const Doctors = () => {
           </button>
         </div>
       </aside>
+      {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark relative">
+        {/* Mobile Header */}
         <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-surface-light dark:bg-surface-dark border-b border-[#e7f3f2] dark:border-[#2a3c3b]">
           <div className="flex items-center gap-2">
             <button className="p-2 text-text-main hover:bg-gray-100 rounded-lg">
@@ -418,6 +425,7 @@ const Doctors = () => {
             </div>
           )}
         </header>
+        {/* Top Bar Desktop */}
         <header className="hidden lg:flex items-center justify-between px-8 py-5 border-b border-transparent">
           <div>
             <nav className="flex text-sm text-text-secondary mb-1">
@@ -572,7 +580,6 @@ const Doctors = () => {
             </div>
           )}
         </main>
-      </div>
       <DoctorDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
