@@ -213,7 +213,7 @@ const Appointments = () => {
   }
 
   const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
-  const _userRole = user?.user_metadata?.role || 'Admin'; // Fix 3: Prefixed with '_'
+  const _userRole = user?.user_metadata?.role || 'Admin'; // Fix 12: Prefixed with '_'
   const userAvatar = user?.user_metadata?.avatar_url || null;
 
   const getStatusBadgeClasses = (status: Appointment['status']) => {

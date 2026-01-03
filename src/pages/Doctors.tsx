@@ -208,7 +208,8 @@ const Doctors = () => {
                     <div className="flex flex-col gap-1">
                       <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
                       <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                    </td>
+                    </div>
+                  </td> {/* FIX: Added closing </td> tag here */}
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
                   </td>
@@ -387,6 +388,7 @@ const Doctors = () => {
             </Link>
           </div>
         </nav>
+        {/* User Logout */}
         <div className="p-4 border-t border-[#e7f3f2] dark:border-[#2a3c3b]">
           <button
             onClick={handleLogout}
@@ -397,7 +399,9 @@ const Doctors = () => {
           </button>
         </div>
       </aside>
+      {/* Main Content Wrapper */}
       <div className="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark relative">
+        {/* Mobile Header */}
         <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-surface-light dark:bg-surface-dark border-b border-[#e7f3f2] dark:border-[#2a3c3b]">
           <div className="flex items-center gap-2">
             <button className="p-2 text-text-main hover:bg-gray-100 rounded-lg">
@@ -417,6 +421,7 @@ const Doctors = () => {
             </div>
           )}
         </header>
+        {/* Top Bar Desktop */}
         <header className="hidden lg:flex items-center justify-between px-8 py-5 border-b border-transparent">
           <div>
             <nav className="flex text-sm text-text-secondary mb-1">
@@ -571,7 +576,6 @@ const Doctors = () => {
             </div>
           )}
         </main>
-      </div>
       <DoctorDialog
         isOpen={isDialogOpen}
         onClose={() => setIsDialogOpen(false)}
