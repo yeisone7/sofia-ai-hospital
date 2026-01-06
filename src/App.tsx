@@ -16,40 +16,50 @@ import Patients from "./pages/Patients";
 import Profile from "./pages/Profile";
 import LandingPage from "./pages/LandingPage";
 import Users from "./pages/Users";
+import Admin from "./pages/Admin";
 import Reports from "./pages/Reports"; // Importar la página de Reportes
 import Help from "./pages/Help"; // Importar la página de Ayuda
 import { SessionContextProvider } from "./integrations/supabase/session-context";
+import { ThemeProvider } from "@/components/theme-provider";
+import DashboardLayout from "./components/DashboardLayout";
+
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <SessionContextProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/landing" element={<LandingPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/messages" element={<Messages />} />
-            <Route path="/appointments" element={<Appointments />} />
-            <Route path="/doctors" element={<Doctors />} />
-            <Route path="/settings" element={<Settings />} />
-            <Route path="/patients" element={<Patients />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/users" element={<Users />} />
-            <Route path="/reports" element={<Reports />} /> {/* Ruta para la página de Reportes */}
-            <Route path="/help" element={<Help />} /> {/* Ruta para la página de Ayuda */}
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </SessionContextProvider>
-      </BrowserRouter>
-    </TooltipProvider>
+    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <SessionContextProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/landing" element={<LandingPage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+
+              {/* Protected Routes inside DashboardLayout */}
+              <Route path="/dashboard" element={<DashboardLayout><Dashboard /></DashboardLayout>} />
+              <Route path="/messages" element={<DashboardLayout><Messages /></DashboardLayout>} />
+              <Route path="/appointments" element={<DashboardLayout><Appointments /></DashboardLayout>} />
+              <Route path="/doctors" element={<DashboardLayout><Doctors /></DashboardLayout>} />
+              <Route path="/settings" element={<DashboardLayout><Settings /></DashboardLayout>} />
+              <Route path="/patients" element={<DashboardLayout><Patients /></DashboardLayout>} />
+              <Route path="/profile" element={<DashboardLayout><Profile /></DashboardLayout>} />
+              <Route path="/users" element={<DashboardLayout><Users /></DashboardLayout>} />
+              <Route path="/admin" element={<DashboardLayout><Admin /></DashboardLayout>} />
+              <Route path="/reports" element={<DashboardLayout><Reports /></DashboardLayout>} />
+              <Route path="/help" element={<DashboardLayout><Help /></DashboardLayout>} />
+
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </SessionContextProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

@@ -17,7 +17,8 @@ export interface Appointment {
   appointment_date: string;
   appointment_type: string;
   doctor_id: string | null;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'rescheduled';
+  status: 'pending' | 'confirmed' | 'cancelled' | 'rescheduled' | 'completed';
+  patient_id_number?: string | null;
   reminder_sent: boolean;
   notes: string | null;
   created_at: string;

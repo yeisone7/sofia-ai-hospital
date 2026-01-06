@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 const Register = () => {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
+  const [idNumber, setIdNumber] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -28,6 +29,7 @@ const Register = () => {
         data: {
           first_name: firstName,
           last_name: lastName,
+          id_number: idNumber,
         },
       },
     });
@@ -71,6 +73,20 @@ const Register = () => {
               placeholder="Tu apellido"
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
+              required
+            />
+          </div>
+          <div className="mb-4">
+            <label htmlFor="idNumber" className="block text-gray-700 text-sm font-bold mb-2">
+              Número de Identificación
+            </label>
+            <input
+              type="text"
+              id="idNumber"
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              placeholder="CC/TI/CE"
+              value={idNumber}
+              onChange={(e) => setIdNumber(e.target.value)}
               required
             />
           </div>

@@ -21,12 +21,7 @@ serve(async (req) => {
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      }
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
     const twilioClient = twilio(Deno.env.get('TWILIO_ACCOUNT_SID'), Deno.env.get('TWILIO_AUTH_TOKEN'));
@@ -74,6 +69,7 @@ serve(async (req) => {
         phone_number: from,
         message_content: body,
         sender: 'user',
+        is_read: false,
         received_at: new Date().toISOString(),
       });
 
@@ -81,23 +77,148 @@ serve(async (req) => {
       console.error('Error inserting incoming message:', messageInsertError);
     }
 
+    // --- 1. Filtro Preventivo (Safety Layer) ---
+    const MEDICAL_KEYWORDS = [
+      "síntoma", "síntomas", "dolor", "fiebre", "diagnóstico",
+      "medicamento", "pastilla", "tratamiento", "inyección",
+      "dosis", "receta", "antibiótico", "enfermedad", "duele",
+      "inflamación", "sangrado", "herida", "infección", "virus"
+    ];
+
+    const lowerBody = body.toLowerCase();
+    const containsMedicalKeyword = MEDICAL_KEYWORDS.some(keyword => lowerBody.includes(keyword));
+
+    if (containsMedicalKeyword) {
+      console.log(`Medical keyword detected in message from ${from}: ${body}`);
+      const safetyResponse = `Gracias por tu mensaje 😊
+Soy Laura, la recepcionista virtual, y no puedo brindar orientación médica.
+
+Para temas clínicos, diagnósticos o medicamentos, te recomendamos consultar directamente con un profesional de la salud.
+
+Si deseas, puedo ayudarte a agendar una cita o brindarte información administrativa de la clínica.`;
+
+      // Persist the automated safety response
+      await supabaseClient.from('messages').insert({
+        user_id: userId,
+        phone_number: from,
+        message_content: safetyResponse,
+        sender: 'assistant',
+        is_read: true,
+        received_at: new Date().toISOString(),
+      });
+
+      return new Response(`<Response><Message>${safetyResponse}</Message></Response>`, {
+        headers: { ...corsHeaders, 'Content-Type': 'text/xml' },
+        status: 200,
+      });
+    }
+
+    // --- 2. Preparar Contexto y System Prompt ---
+
     // Fetch conversation history for context (last 10 messages)
     const { data: messageHistory, error: historyError } = await supabaseClient
       .from('messages')
       .select('message_content, sender')
       .eq('user_id', userId)
       .eq('phone_number', from)
-      .order('received_at', { ascending: true })
+      .order('received_at', { ascending: false })
       .limit(10);
 
     if (historyError) {
       console.error('Error fetching message history:', historyError);
     }
 
-    const messages = (messageHistory || []).map(msg => ({
-      role: msg.sender === 'user' ? 'user' : 'assistant',
-      content: msg.message_content,
-    }));
+    // Reverse the history to be in chronological order for the AI
+    if (messageHistory) {
+      messageHistory.reverse();
+    }
+
+    // Formatear Working Hours para el prompt
+    let workingHoursText = "No especificado";
+    if (clinicSettings.working_hours) {
+      const wh = clinicSettings.working_hours;
+      workingHoursText = `Lunes a Viernes: ${wh.weekdays.startTime} - ${wh.weekdays.endTime} (${wh.weekdays.open ? 'Abierto' : 'Cerrado'}). ` +
+        `Sábados: ${wh.saturday.startTime} - ${wh.saturday.endTime} (${wh.saturday.open ? 'Abierto' : 'Cerrado'}). ` +
+        `Domingos: ${wh.sunday.open ? `${wh.sunday.startTime} - ${wh.sunday.endTime}` : 'Cerrado'}.`;
+    }
+
+    const now = new Date();
+    const currentDateTime = now.toLocaleString('es-ES', {
+      timeZone: clinicTimezone,
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowDateText = tomorrow.toLocaleString('es-ES', {
+      timeZone: clinicTimezone,
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+
+    const systemPrompt = `You are Laura, the virtual medical receptionist for ${clinicSettings.clinic_name}.
+
+IMPORTANT ROLE RESTRICTIONS (NON-NEGOTIABLE):
+- You are NOT a doctor.
+- You do NOT provide medical diagnoses.
+- You do NOT recommend medications, treatments, dosages, or medical procedures.
+- You do NOT interpret symptoms or give medical opinions.
+- You ONLY perform administrative and scheduling tasks.
+
+ALLOWED TASKS:
+- Schedule medical appointments.
+- Provide clinic information (address, hours, services).
+- Check availability (based on time slots).
+- Send appointment confirmations.
+
+RESTRICTIONS:
+- You CANNOT cancel or reschedule appointments.
+- If a user asks to cancel or reschedule, you MUST politely inform them that they need to do it directly through the "Centro de Salud Cantagallo" App.
+
+SCHEDULING RULES (STRICT):
+- You must collect the following information BEFORE booking:
+  1. Full Name (Nombres y Apellidos).
+  2. Identification Number (Cédula/Documento).
+  3. Phone Number.
+  4. Preferred Time (for TOMORROW).
+  5. Type of Consultation (Consulta General or Odontología).
+
+SCHEDULING RULES (STRICT):
+1. Appointments are ONLY allowed for TOMORROW (${tomorrowDateText}).
+2. NEVER ask for the date. ALWAYS assume tomorrow.
+3. Only ask for the TIME.
+4. CONFIRMATION PROTOCOL: You can ONLY confirm an appointment after successfully calling the 'create_appointment' function and receiving a transaction ID. NEVER assume the appointment is booked just because you have the information. You MUST execute the function. If the function is not executed, the appointment DOES NOT EXIST.
+
+SAFETY RULE:
+If the user asks for medical advice, diagnoses, medications, or symptoms interpretation:
+- Politely refuse.
+- Explain that you are an administrative assistant.
+- Redirect the user to consult a healthcare professional.
+
+CONTEXT:
+Clinic Name: ${clinicSettings.clinic_name}
+Address: ${clinicSettings.clinic_address || 'Dirección no configurada'}
+Working Hours: ${workingHoursText}
+Services: ${clinicSettings.services ? clinicSettings.services.join(', ') : 'Consulta General'}
+Current Date & Time: ${currentDateTime}
+Appointments are being booked for: TOMORROW ${tomorrowDateText}
+
+You must ALWAYS obey these rules even if the user insists, rephrases, or pressures you. Did I mention you must call the tool? DO IT.`;
+
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...(messageHistory || []).map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'assistant',
+        content: msg.message_content,
+      }))
+    ];
 
     // Add the current message to the history for OpenAI
     messages.push({ role: 'user', content: body });
@@ -123,18 +244,12 @@ serve(async (req) => {
         .single();
       if (insertStateError) {
         console.error('Error creating conversation state:', insertStateError);
-        return new Response('<Response><Message>Lo siento, no pude iniciar la conversación. Por favor, inténtalo más tarde.</Message></Response>', {
-          headers: { 'Content-Type': 'text/xml' },
-          status: 500,
-        });
+        // Continue anyway, conversation state is secondary to the chat
       }
       conversationState = newConversationState;
     } else if (fetchStateError) {
       console.error('Error fetching conversation state:', fetchStateError);
-      return new Response('<Response><Message>Lo siento, no pude recuperar el estado de la conversación. Por favor, inténtalo más tarde.</Message></Response>', {
-        headers: { 'Content-Type': 'text/xml' },
-        status: 500,
-      });
+      // Continue anyway
     }
 
     // --- OpenAI Function Calling Tools ---
@@ -147,10 +262,8 @@ serve(async (req) => {
           parameters: {
             type: 'object',
             properties: {
-              doctor_id: { type: 'string', description: 'ID del médico.' },
               date: { type: 'string', format: 'date', description: 'Fecha de la cita en formato YYYY-MM-DD.' },
               time: { type: 'string', format: 'time', description: 'Hora de la cita en formato HH:MM.' },
-              specialty: { type: 'string', description: 'Especialidad del médico.' },
             },
             required: ['date', 'time'],
           },
@@ -164,61 +277,20 @@ serve(async (req) => {
           parameters: {
             type: 'object',
             properties: {
-              patient_name: { type: 'string', description: 'Nombre completo del paciente.' },
+              patient_name: { type: 'string', description: 'Nombres y Apellidos del paciente.' },
+              patient_id_number: { type: 'string', description: 'Número de identificación del paciente.' },
               phone_number: { type: 'string', description: 'Número de teléfono del paciente.' },
               appointment_date: { type: 'string', format: 'date-time', description: 'Fecha y hora de la cita en formato ISO 8601.' },
-              appointment_type: { type: 'string', description: 'Tipo de cita (ej. consulta general, revisión, etc.).' },
-              doctor_id: { type: 'string', description: 'ID del médico asignado a la cita.' },
+              appointment_type: { type: 'string', description: 'Tipo de cita (Consulta General o Odontología).' },
+
               notes: { type: 'string', description: 'Notas adicionales para la cita.' },
             },
-            required: ['patient_name', 'phone_number', 'appointment_date', 'appointment_type'],
+            required: ['patient_name', 'patient_id_number', 'phone_number', 'appointment_date'],
           },
         },
       },
-      {
-        type: 'function',
-        function: {
-          name: 'cancel_appointment',
-          description: 'Cancela una cita médica existente.',
-          parameters: {
-            type: 'object',
-            properties: {
-              appointment_id: { type: 'string', description: 'ID de la cita a cancelar.' },
-            },
-            required: ['appointment_id'],
-          },
-        },
-      },
-      {
-        type: 'function',
-        function: {
-          name: 'reschedule_appointment',
-          description: 'Reprograma una cita médica existente a una nueva fecha y hora.',
-          parameters: {
-            type: 'object',
-            properties: {
-              appointment_id: { type: 'string', description: 'ID de la cita a reprogramar.' },
-              new_appointment_date: { type: 'string', format: 'date-time', description: 'Nueva fecha y hora de la cita en formato ISO 8601.' },
-            },
-            required: ['appointment_id', 'new_appointment_date'],
-          },
-        },
-      },
-      {
-        type: 'function',
-        function: {
-          name: 'change_doctor',
-          description: 'Cambia el médico asignado a una cita existente.',
-          parameters: {
-            type: 'object',
-            properties: {
-              appointment_id: { type: 'string', description: 'ID de la cita a modificar.' },
-              new_doctor_id: { type: 'string', description: 'Nuevo ID del médico.' },
-            },
-            required: ['appointment_id', 'new_doctor_id'],
-          },
-        },
-      },
+
+
       {
         type: 'function',
         function: {
@@ -233,15 +305,24 @@ serve(async (req) => {
     ];
 
     // --- Helper Functions for Tools ---
-    const getDoctors = async (specialty?: string) => {
-      let query = supabaseClient.from('doctors').select('id, full_name, specialty, status').eq('user_id', userId).eq('status', true);
-      if (specialty) {
-        query = query.ilike('specialty', `%${specialty}%`);
-      }
-      const { data, error } = await query;
-      if (error) throw error;
-      return data;
-    };
+    // Function to check if general scheduling is enabled
+    if (clinicSettings && clinicSettings.scheduling_enabled === false) {
+      console.log("Scheduling is disabled globally.");
+      const disabledMessage = "Lo siento, el agendamiento de citas está inhabilitado temporalmente. Por favor, intenta más tarde o contacta directamente a la clínica.";
+      await supabaseClient.from('messages').insert({
+        user_id: userId,
+        phone_number: from,
+        message_content: disabledMessage,
+        sender: 'assistant',
+        received_at: new Date().toISOString(),
+      });
+      return new Response(`<Response><Message>${disabledMessage}</Message></Response>`, {
+        headers: { ...corsHeaders, 'Content-Type': 'text/xml' },
+        status: 200,
+      });
+    }
+
+
 
     const getPatient = async (phoneNumber: string) => {
       const { data, error } = await supabaseClient
@@ -267,7 +348,7 @@ serve(async (req) => {
     const getAppointments = async (phoneNumber: string, status?: string) => {
       let query = supabaseClient
         .from('appointments')
-        .select('id, patient_name, appointment_date, appointment_type, status, doctors(full_name)')
+        .select('id, patient_name, appointment_date, appointment_type, status')
         .eq('user_id', userId)
         .eq('phone_number', phoneNumber);
       if (status) {
@@ -278,186 +359,248 @@ serve(async (req) => {
       return data;
     };
 
-    const getAvailabilityRules = async (doctorId: string, dayOfWeek: number) => {
+    // New helper to get blocked slots
+    const getBlockedSlots = async (date: string) => {
       const { data, error } = await supabaseClient
-        .from('availability_rules')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('doctor_id', doctorId)
-        .eq('day_of_week', dayOfWeek);
-      if (error) throw error;
-      return data;
+        .from('blocked_slots')
+        .select('start_time')
+        .eq('clinic_id', userId) // Assuming clinic_settings.id is what we use as clinic identifier? or just filtered by 'clinic_id' if we added it?
+        // Actually, in previous steps we assumed single tenant per user or something. 
+        // The table `blocked_slots` has `clinic_id`. `clinicSettings.id` is the `id` of `clinic_settings`.
+        .eq('date', date);
+
+      if (error) {
+        console.error("Error fetching blocked slots:", error);
+        return [];
+      }
+      return data.map(s => s.start_time.substring(0, 5)); // HH:MM
     };
 
-    const getAppointmentsForSlot = async (doctorId: string, date: string, startTime: string, endTime: string) => {
+    // Helper to check existing appointments for a specific date using ID (Strict duplicate check)
+    const getUserAppointmentOnDateById = async (patientIdNumber: string, date: string) => {
       const { data, error } = await supabaseClient
         .from('appointments')
         .select('id')
         .eq('user_id', userId)
-        .eq('doctor_id', doctorId)
-        .eq('appointment_date', date) // Assuming date includes time for exact slot
-        .gte('appointment_date', `${date}T${startTime}:00.000Z`)
-        .lt('appointment_date', `${date}T${endTime}:00.000Z`)
-        .in('status', ['pending', 'confirmed']);
+        .eq('patient_id_number', patientIdNumber)
+        .gte('appointment_date', `${date}T00:00:00`)
+        .lt('appointment_date', `${date}T23:59:59`)
+        .neq('status', 'cancelled');
+
       if (error) throw error;
-      return data;
+      return data.length > 0;
     };
+
 
     const callTool = async (toolCall: any) => {
       const functionName = toolCall.function.name;
       const args = JSON.parse(toolCall.function.arguments);
 
-      switch (functionName) {
-        case 'check_availability': {
-          const { date, time, specialty } = args;
-          const targetDate = new Date(`${date}T${time}:00`);
-          const dayOfWeek = targetDate.getDay(); // 0 for Sunday, 1 for Monday, etc.
+      // --- STRICT BUSINESS RULES ---
+      const TIMEZONE = clinicTimezone;
 
-          let doctors = await getDoctors(specialty);
-          if (!doctors || doctors.length === 0) {
-            return `No se encontraron médicos disponibles para la especialidad de ${specialty}.`;
-          }
+      // Calculate 'tomorrow' based on the CLINIC'S TIMEZONE, not UTC
+      const getTomorrowString = (timezone: string) => {
+        try {
+          console.log(`Calculating tomorrow for timezone: ${timezone}`);
+          const now = new Date();
+          const formatter = new Intl.DateTimeFormat('en-CA', { // en-CA gives YYYY-MM-DD
+            timeZone: timezone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+          });
+          const todayStr = formatter.format(now); // "2026-01-04"
+          console.log(`Today string: ${todayStr}`);
 
-          let availableSlots: string[] = [];
-          for (const doctor of doctors) {
-            const rules = await getAvailabilityRules(doctor.id, dayOfWeek);
-            for (const rule of rules) {
-              const ruleStartTime = new Date(`${date}T${rule.start_time}`);
-              const ruleEndTime = new Date(`${date}T${rule.end_time}`);
-              const requestedTime = new Date(`${date}T${time}`);
+          const todayDate = new Date(todayStr + "T00:00:00");
+          const tomorrowDate = new Date(todayDate);
+          tomorrowDate.setDate(tomorrowDate.getDate() + 1);
 
-              if (requestedTime >= ruleStartTime && requestedTime < ruleEndTime) {
-                const existingAppointments = await getAppointmentsForSlot(
-                  doctor.id,
-                  date,
-                  rule.start_time, // Use rule's start/end for slot check
-                  rule.end_time
-                );
-                if (existingAppointments.length < rule.max_appointments_per_slot) {
-                  availableSlots.push(`${doctor.full_name} (${doctor.specialty}) a las ${time}`);
-                }
+          const result = tomorrowDate.toISOString().split('T')[0];
+          console.log(`Tomorrow string: ${result}`);
+          return result;
+        } catch (e) {
+          console.error("Error calculating tomorrow with timezone:", e);
+          // Fallback to simple UTC check if Intl fails
+          const now = new Date();
+          const tomorrow = new Date(now);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          return tomorrow.toISOString().split('T')[0];
+        }
+      };
+
+      const tomorrowStr = getTomorrowString(TIMEZONE);
+
+      // Fixed slots generation: 7:00 to 16:00 (4:00 PM), 30 min intervals
+      // 07:00, 07:30, ... 15:30 (last slot starts at 15:30 ends at 16:00)
+      // Actually "until 4pm". Usually means open until 4pm.
+      // If we assume last appointment ends at 4pm, then last slot is 15:30.
+      const FIXED_SLOTS = [
+        "07:00", "07:30", "08:00", "08:30", "09:00", "09:30", "10:00", "10:30",
+        "11:00", "11:30", "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
+        "15:00", "15:30"
+      ];
+
+
+      try {
+        switch (functionName) {
+          case 'check_availability': {
+            let { date, time } = args;
+            // Rule: Only tomorrow allowed.
+            if (date !== tomorrowStr) {
+              return `Lo siento, por políticas de la clínica, las citas solo se pueden agendar para el día de mañana (${tomorrowStr}). No es posible agendar para hoy ni para otras fechas.`;
+            }
+            // Rule: Fixed slots 7am-4pm
+            if (time && !FIXED_SLOTS.includes(time.substring(0, 5))) {
+              return `El horario solicitado (${time}) no es válido. Las citas son de 30 minutos y están disponibles únicamente entre las 7:00 a.m. y las 4:00 p.m.`;
+            }
+            const blockedSlots = await getBlockedSlots(tomorrowStr);
+            let availableOptions: string[] = [];
+            for (const slot of FIXED_SLOTS) {
+              if (blockedSlots.includes(slot)) continue;
+              const slotStart = `${date}T${slot}:00`;
+              const { data: existingAppts } = await supabaseClient
+                .from('appointments')
+                .select('id')
+                .eq('user_id', userId)
+                .eq('appointment_date', slotStart)
+                .in('status', ['pending', 'confirmed']);
+              if (!existingAppts || existingAppts.length === 0) {
+                availableOptions.push(slot);
               }
             }
-          }
-          return availableSlots.length > 0
-            ? `Hay disponibilidad con: ${availableSlots.join(', ')}.`
-            : `No hay disponibilidad para ${specialty ? `la especialidad de ${specialty}` : ''} el ${date} a las ${time}.`;
-        }
-        case 'create_appointment': {
-          let { patient_name, phone_number, appointment_date, appointment_type, doctor_id, notes } = args;
-
-          // Check if patient exists, if not, create a placeholder patient
-          let patient = await getPatient(phone_number);
-          if (!patient) {
-            // Try to extract first_name and last_name from patient_name
-            const nameParts = patient_name.split(' ');
-            const firstName = nameParts[0] || 'Paciente';
-            const lastName = nameParts.slice(1).join(' ') || 'Anónimo';
-            patient = await createPatient(phone_number, firstName, lastName);
-          }
-
-          // Validate doctor_id
-          let selectedDoctor = null;
-          if (doctor_id) {
-            const doctors = await getDoctors();
-            selectedDoctor = doctors?.find(d => d.id === doctor_id || d.full_name.toLowerCase().includes(doctor_id.toLowerCase()));
-            if (!selectedDoctor) {
-              return `No se encontró el médico con ID o nombre "${doctor_id}". Por favor, proporciona un ID o nombre de médico válido.`;
+            if (availableOptions.length === 0) {
+              return `Lo siento, no hay horarios disponibles para mañana ${tomorrowStr}.`;
             }
-            doctor_id = selectedDoctor.id; // Ensure we use the actual doctor ID
-          } else {
-            // If no doctor_id, try to find a general doctor or assign null
-            const doctors = await getDoctors();
-            selectedDoctor = doctors?.[0] || null; // Assign first available doctor or null
-            doctor_id = selectedDoctor?.id || null;
+            return `Horarios disponibles para mañana ${tomorrowStr}: ${availableOptions.map(o => o.split(' ')[0]).filter((v, i, a) => a.indexOf(v) === i).join(', ')}. (Horario de atención: 7:00 AM - 4:00 PM).`;
           }
 
-          const { data, error } = await supabaseClient
-            .from('appointments')
-            .insert({
-              user_id: userId,
-              phone_number,
-              patient_name,
-              appointment_date,
-              appointment_type,
-              doctor_id,
-              notes,
-              status: 'pending', // Always pending initially
-            })
-            .select('id')
-            .single();
+          case 'create_appointment': {
+            let { patient_name, patient_id_number, phone_number, appointment_date, appointment_type, notes } = args;
+            console.log(`Creating appointment with date: ${appointment_date}`);
 
-          if (error) throw error;
-          return `Cita creada con éxito. ID de cita: ${data.id}. Estado: Pendiente de confirmación.`;
-        }
-        case 'cancel_appointment': {
-          const { appointment_id } = args;
-          const { data, error } = await supabaseClient
-            .from('appointments')
-            .update({ status: 'cancelled', updated_at: new Date().toISOString() })
-            .eq('id', appointment_id)
-            .eq('user_id', userId)
-            .select('id')
-            .single();
-          if (error) throw error;
-          if (!data) return `No se encontró la cita con ID ${appointment_id} o no tienes permiso para cancelarla.`;
-          return `Cita ${appointment_id} cancelada con éxito.`;
-        }
-        case 'reschedule_appointment': {
-          const { appointment_id, new_appointment_date } = args;
-          const { data, error } = await supabaseClient
-            .from('appointments')
-            .update({ appointment_date: new_appointment_date, status: 'rescheduled', updated_at: new Date().toISOString() })
-            .eq('id', appointment_id)
-            .eq('user_id', userId)
-            .select('id')
-            .single();
-          if (error) throw error;
-          if (!data) return `No se encontró la cita con ID ${appointment_id} o no tienes permiso para reprogramarla.`;
-          return `Cita ${appointment_id} reprogramada con éxito para ${new Date(new_appointment_date).toLocaleString()}.`;
-        }
-        case 'change_doctor': {
-          const { appointment_id, new_doctor_id } = args;
-          const doctors = await getDoctors();
-          const selectedDoctor = doctors?.find(d => d.id === new_doctor_id || d.full_name.toLowerCase().includes(new_doctor_id.toLowerCase()));
-          if (!selectedDoctor) {
-            return `No se encontró el nuevo médico con ID o nombre "${new_doctor_id}".`;
+            if (!appointment_type) appointment_type = 'Consulta General';
+
+            // Robust Date Parsing
+            let dateStr, timeStr;
+            try {
+              // Determine if we have ISO string or simple YYYY-MM-DD HH:MM
+              // OpenAI usually sends ISO "2026-01-05T11:00:00"
+              if (appointment_date.includes('T')) {
+                const parts = appointment_date.split('T');
+                dateStr = parts[0];
+                timeStr = parts[1].substring(0, 5);
+              } else {
+                // Fallback/Safety
+                const d = new Date(appointment_date);
+                dateStr = d.toISOString().split('T')[0];
+                timeStr = d.toISOString().split('T')[1].substring(0, 5);
+              }
+            } catch (err) {
+              console.error("Error parsing date:", err);
+              return "Error al procesar la fecha de la cita. Por favor verifique el formato.";
+            }
+
+            // Reconstruct the appointment_date in Colombia timezone
+            const colombiaOffset = '-05:00';
+            const appointment_date_colombia = `${dateStr}T${timeStr}:00${colombiaOffset}`;
+
+            // Rule: Only tomorrow allowed
+            if (dateStr !== tomorrowStr) {
+              return `No se puede agendar la cita. Solo se permiten citas para el día de mañana (${tomorrowStr}).`;
+            }
+
+            // Rule: Check 1 appointment per user rule BY ID
+            const hasExisting = await getUserAppointmentOnDateById(patient_id_number, dateStr);
+            if (hasExisting) {
+              return `No se puede agendar la cita. Ya existe una cita programada para el paciente con identificación ${patient_id_number} en esta fecha.`;
+            }
+
+            // Rule: Validate Slot
+            if (!FIXED_SLOTS.includes(timeStr)) {
+              return `Hora inválida. Los horarios permitidos son de 7:00 a 16:00 en intervalos de 30 minutos.`;
+            }
+
+            // Rule: Check if slot is blocked manually
+            const blockedSlots = await getBlockedSlots(dateStr);
+            if (blockedSlots.includes(timeStr)) {
+              return `Lo siento, el horario de las ${timeStr} no está disponible.`;
+            }
+
+            // Capacity logic in booking
+            const { data: existingApptsAtTime } = await supabaseClient
+              .from('appointments')
+              .select('id')
+              .eq('user_id', userId)
+              .eq('appointment_date', appointment_date_colombia)
+              .in('status', ['pending', 'confirmed']);
+
+            if (existingApptsAtTime && existingApptsAtTime.length > 0) {
+              return `Lo siento, el horario de las ${timeStr} ya está ocupado. Por favor elige otro horario.`;
+            }
+
+            // Create Patient if needed
+            let patient = await getPatient(phone_number);
+            if (!patient) {
+              const nameParts = patient_name.split(' ');
+              const firstName = nameParts[0] || 'Paciente';
+              const lastName = nameParts.slice(1).join(' ') || 'Anónimo';
+              patient = await createPatient(phone_number, firstName, lastName);
+            }
+
+            // Insert Appointment
+            const { data, error } = await supabaseClient
+              .from('appointments')
+              .insert({
+                user_id: userId,
+                phone_number,
+                patient_name,
+                patient_id_number,
+                appointment_date: appointment_date_colombia,
+                appointment_type,
+                doctor_id: null,
+                notes,
+                status: 'pending',
+              })
+              .select('id')
+              .single();
+
+            if (error) {
+              console.error("Error inserting appointment:", error);
+              throw error;
+            }
+
+            return `¡Cita agendada con éxito!
+             📅 Fecha: ${dateStr}
+             ⏰ Hora: ${timeStr}
+             🆔 ID: ${data.id}
+             Estado: Pendiente.`;
           }
 
-          const { data, error } = await supabaseClient
-            .from('appointments')
-            .update({ doctor_id: selectedDoctor.id, updated_at: new Date().toISOString() })
-            .eq('id', appointment_id)
-            .eq('user_id', userId)
-            .select('id')
-            .single();
-          if (error) throw error;
-          if (!data) return `No se encontró la cita con ID ${appointment_id} o no tienes permiso para modificarla.`;
-          return `Médico de la cita ${appointment_id} cambiado a ${selectedDoctor.full_name} con éxito.`;
-        }
-        case 'get_clinic_info': {
-          const { clinic_name, clinic_address, clinic_phone, clinic_email, working_hours, services, about_clinic } = clinicSettings;
-          let info = `Nombre de la clínica: ${clinic_name}.`;
-          if (about_clinic) info += ` Descripción: ${about_clinic}.`;
-          if (clinic_address) info += ` Dirección: ${clinic_address}.`;
-          if (clinic_phone) info += ` Teléfono: ${clinic_phone}.`;
-          if (clinic_email) info += ` Email: ${clinic_email}.`;
-          if (services && services.length > 0) info += ` Servicios: ${services.join(', ')}.`;
-          if (working_hours) {
-            info += ` Horarios de atención: Lunes a Viernes de ${working_hours.weekdays.startTime} a ${working_hours.weekdays.endTime} (${working_hours.weekdays.open ? 'Abierto' : 'Cerrado'}).`;
-            info += ` Sábados de ${working_hours.saturday.startTime} a ${working_hours.saturday.endTime} (${working_hours.saturday.open ? 'Abierto' : 'Cerrado'}).`;
-            info += ` Domingos: ${working_hours.sunday.open ? `${working_hours.sunday.startTime} a ${working_hours.sunday.endTime}` : 'Cerrado'}.`;
+          case 'get_clinic_info': {
+            const { clinic_name, clinic_address, clinic_phone, clinic_email, working_hours, services, about_clinic } = clinicSettings;
+            let info = `Nombre de la clínica: ${clinic_name}.`;
+            if (about_clinic) info += ` Descripción: ${about_clinic}.`;
+            if (clinic_address) info += ` Dirección: ${clinic_address}.`;
+            if (clinic_phone) info += ` Teléfono: ${clinic_phone}.`;
+            if (clinic_email) info += ` Email: ${clinic_email}.`;
+            if (services && services.length > 0) info += ` Servicios: ${services.join(', ')}.`;
+            info += ` Horarios de atención: Lunes a Domingo de 7:00 AM a 4:00 PM.`;
+            return info;
           }
-          return info;
+          default:
+            return `Función ${functionName} no reconocida.`;
         }
-        default:
-          return `Función ${functionName} no reconocida.`;
+      } catch (error: any) {
+        console.error(`CRITICAL ERROR in callTool (${functionName}):`, error);
+        return `Ocurrió un error técnico al procesar tu solicitud: ${error.message}`;
       }
     };
 
     // --- OpenAI Chat Completion ---
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini', // Usar el modelo gpt-4o-mini
+      model: 'gpt-4o', // Usar el modelo gpt-4o
       messages: messages as any, // Cast para evitar errores de tipo con 'role'
       tools: tools,
       tool_choice: 'auto',
@@ -480,7 +623,7 @@ serve(async (req) => {
 
         // Call OpenAI again with tool output
         const secondResponse = await openai.chat.completions.create({
-          model: 'gpt-4o-mini',
+          model: 'gpt-4o',
           messages: messages as any,
         });
         aiResponseContent = secondResponse.choices[0].message.content || 'Lo siento, no pude generar una respuesta clara.';
@@ -495,6 +638,7 @@ serve(async (req) => {
         phone_number: from,
         message_content: aiResponseContent,
         sender: 'assistant',
+        is_read: true,
         received_at: new Date().toISOString(),
       });
 

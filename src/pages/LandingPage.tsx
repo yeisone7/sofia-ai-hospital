@@ -87,10 +87,7 @@ const LandingPage = () => {
     fetchClinicSettings();
   }, []);
 
-  const handleStartChat = () => {
-    const whatsappUrl = clinicSettings?.whatsapp_webhook_url || 'https://wa.me/';
-    window.open(whatsappUrl, '_blank');
-  };
+
 
   const handleViewHours = () => {
     availabilityRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -167,10 +164,7 @@ const LandingPage = () => {
                   Bienvenido a la forma más sencilla de cuidar tu salud. Laura AI te ayuda a programar, reprogramar o cancelar tus consultas médicas al instante, sin llamadas ni esperas.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 mt-2">
-                  <button onClick={handleStartChat} className="h-12 px-6 rounded-lg bg-primary hover:bg-primary-hover text-[#0d1b1a] text-base font-bold shadow-lg shadow-primary/25 transition-all flex items-center justify-center gap-2">
-                    <span className="material-symbols-outlined text-[20px]">chat</span>
-                    Iniciar Chat
-                  </button>
+
                   <button onClick={handleViewHours} className="h-12 px-6 rounded-lg bg-white dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-text-main dark:text-white text-base font-bold hover:bg-gray-50 dark:hover:bg-gray-800 transition-all flex items-center justify-center">
                     Ver Horarios
                   </button>
@@ -344,10 +338,7 @@ const LandingPage = () => {
                   Inicia una conversación con Laura AI ahora y deja de preocuparte por la gestión de tus consultas médicas.
                 </p>
                 <div className="mt-4 flex w-full flex-col items-center justify-center gap-4 sm:flex-row">
-                  <button onClick={handleStartChat} className="h-14 min-w-[240px] rounded-xl bg-primary hover:bg-primary-hover text-[#0d1b1a] text-lg font-bold shadow-lg shadow-primary/20 transition-all flex items-center justify-center gap-2">
-                    <span className="material-symbols-outlined">chat</span>
-                    Chatear en WhatsApp
-                  </button>
+
                 </div>
                 <p className="mt-4 text-sm text-gray-500">Servicio gratuito para pacientes</p>
               </div>

@@ -1,17 +1,10 @@
-import React, { useState } from 'react';
-import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useState } from 'react';
 import { useSession } from '@/integrations/supabase/session-context';
-import { supabase } from '@/integrations/supabase/client';
-import { showError, showSuccess } from '@/utils/toast';
-import { getInitials } from '@/lib/utils';
 
 const Help = () => {
-  const { user, isLoading: isSessionLoading } = useSession();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const { isLoading: isSessionLoading } = useSession();
   const [activeSection, setActiveSection] = useState('getting-started');
   const [searchQuery, setSearchQuery] = useState('');
-  const isAdmin = user?.user_metadata?.role === 'admin';
 
   const helpSections = [
     {
@@ -19,17 +12,95 @@ const Help = () => {
       title: 'Primeros Pasos',
       icon: 'rocket_launch',
       content: `
-        <h3 className="text-lg font-bold mb-2">Bienvenido a Laura AI</h3>
-        <p className="mb-4">Laura AI es tu asistente virtual para la gestión de citas médicas. Aquí tienes una guía rápida para comenzar:</p>
+        <h3 class="text-lg font-bold mb-2">Bienvenido a Laura AI - E.S.E. Cantagallo</h3>
+        <p class="mb-4">Laura AI es tu asistente virtual inteligente para la gestión integral del Centro de Salud. Aquí tienes una guía rápida para comenzar:</p>
         
-        <h4 className="font-bold mb-2">1. Configura tu clínica</h4>
-        <p className="mb-4">Ve a la sección "Configuración" para ingresar los datos de tu clínica, horarios de atención y servicios ofrecidos.</p>
+        <h4 class="font-bold mb-2">1. Instalación como PWA (Aplicación)</h4>
+        <p class="mb-4">Puedes instalar Laura AI en tu dispositivo móvil o computadora como una aplicación nativa. Busca el botón "Instalar" en tu navegador (Chrome/Edge) o usa el menú "Agregar a pantalla de inicio" en Safari (iOS).</p>
         
-        <h4 className="font-bold mb-2">2. Agrega médicos</h4>
-        <p className="mb-4">En la sección "Médicos", registra a todos los profesionales de tu equipo con sus especialidades.</p>
+        <h4 class="font-bold mb-2">2. Roles de Usuario</h4>
+        <p class="mb-4">Existen dos tipos de usuarios:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li><strong>Usuario:</strong> Puede gestionar sus propias citas y ver su dashboard personal.</li>
+          <li><strong>Administrador:</strong> Acceso completo a todos los módulos y datos del sistema.</li>
+        </ul>
         
-        <h4 className="font-bold mb-2">3. Conecta con WhatsApp</h4>
-        <p className="mb-4">Configura el webhook de WhatsApp para que Laura AI pueda recibir y responder mensajes de tus pacientes.</p>
+        <h4 class="font-bold mb-2">3. Navegación</h4>
+        <p class="mb-4">Usa el menú lateral izquierdo para acceder a las diferentes secciones. Los módulos visibles dependen de tu rol en el sistema.</p>
+      `
+    },
+    {
+      id: 'roles',
+      title: 'Sistema de Roles',
+      icon: 'admin_panel_settings',
+      content: `
+        <h3 class="text-lg font-bold mb-2">Roles y Permisos</h3>
+        <p class="mb-4">Laura AI implementa un sistema de control de acceso basado en roles para garantizar la seguridad de los datos:</p>
+        
+        <h4 class="font-bold mb-2">👤 Rol: Usuario</h4>
+        <p class="mb-4">Los usuarios con este rol tienen acceso limitado:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li><strong>Dashboard:</strong> Solo ven sus propias estadísticas y citas</li>
+          <li><strong>Citas:</strong> Pueden crear, ver y gestionar únicamente sus propias citas</li>
+          <li><strong>Ayuda:</strong> Acceso completo a la documentación</li>
+        </ul>
+        
+        <h4 class="font-bold mb-2">👨‍💼 Rol: Administrador</h4>
+        <p class="mb-4">Los administradores tienen acceso completo:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li><strong>Dashboard:</strong> Estadísticas globales de toda la clínica</li>
+          <li><strong>Mensajes:</strong> Todas las conversaciones con pacientes</li>
+          <li><strong>Pacientes:</strong> Base de datos completa de pacientes</li>
+          <li><strong>Citas:</strong> Todas las citas del sistema</li>
+          <li><strong>Médicos:</strong> Gestión del equipo médico</li>
+          <li><strong>Reportes:</strong> Análisis y estadísticas avanzadas</li>
+          <li><strong>Configuración:</strong> Parámetros del sistema</li>
+          <li><strong>Usuarios:</strong> Gestión de roles y permisos</li>
+          <li><strong>Comunicados:</strong> Anuncios internos para el personal</li>
+        </ul>
+        
+        <h4 class="font-bold mb-2">🔒 Seguridad</h4>
+        <p class="mb-4">El sistema implementa múltiples capas de seguridad para proteger los datos de los pacientes, incluyendo políticas de seguridad a nivel de base de datos (RLS) que impiden el acceso no autorizado.</p>
+      `
+    },
+    {
+      id: 'pwa',
+      title: 'Instalación PWA',
+      icon: 'install_mobile',
+      content: `
+        <h3 class="text-lg font-bold mb-2">Instalar como Aplicación</h3>
+        <p class="mb-4">Laura AI es una Progressive Web App (PWA) que puedes instalar en cualquier dispositivo:</p>
+        
+        <h4 class="font-bold mb-2">📱 Android (Chrome/Edge)</h4>
+        <ol class="list-decimal pl-6 mb-4">
+          <li>Abre la aplicación en Chrome o Edge</li>
+          <li>Toca el banner "Agregar a pantalla de inicio" que aparece abajo</li>
+          <li>O usa el menú (⋮) → "Agregar a pantalla de inicio"</li>
+          <li>Confirma la instalación</li>
+        </ol>
+        
+        <h4 class="font-bold mb-2">🍎 iPhone/iPad (Safari)</h4>
+        <ol class="list-decimal pl-6 mb-4">
+          <li>Abre la aplicación en Safari</li>
+          <li>Toca el botón Compartir (□↑)</li>
+          <li>Selecciona "Agregar a pantalla de inicio"</li>
+          <li>Personaliza el nombre y toca "Agregar"</li>
+        </ol>
+        
+        <h4 class="font-bold mb-2">💻 Windows/Mac (Chrome/Edge)</h4>
+        <ol class="list-decimal pl-6 mb-4">
+          <li>Busca el ícono de instalación (⊕) en la barra de direcciones</li>
+          <li>Haz clic en "Instalar"</li>
+          <li>La app se agregará a tu sistema como cualquier programa</li>
+        </ol>
+        
+        <h4 class="font-bold mb-2">✅ Ventajas de Instalar</h4>
+        <ul class="list-disc pl-6 mb-4">
+          <li>Icono en tu pantalla de inicio</li>
+          <li>Se abre en pantalla completa (sin barra del navegador)</li>
+          <li>Acceso más rápido</li>
+          <li>Actualizaciones automáticas</li>
+        </ul>
       `
     },
     {
@@ -37,116 +108,233 @@ const Help = () => {
       title: 'Gestión de Citas',
       icon: 'event',
       content: `
-        <h3 className="text-lg font-bold mb-2">Cómo gestionar tus citas</h3>
-        <p className="mb-4">Laura AI te permite gestionar citas de forma eficiente:</p>
+        <h3 class="text-lg font-bold mb-2">Cómo gestionar tus citas</h3>
+        <p class="mb-4">El módulo de citas te permite administrar las consultas médicas de forma eficiente:</p>
         
-        <h4 className="font-bold mb-2">Crear una cita</h4>
-        <p className="mb-4">Puedes crear citas manualmente desde la sección "Citas" o permitir que los pacientes las programen a través de WhatsApp.</p>
+        <h4 class="font-bold mb-2">📅 Crear una Cita</h4>
+        <p class="mb-4">Haz clic en el botón "Nueva Cita" y completa el formulario con:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li>Datos del paciente (nombre, teléfono, cédula)</li>
+          <li>Tipo de cita (consulta, control, procedimiento)</li>
+          <li>Médico asignado</li>
+          <li>Fecha y hora (solo se permiten citas para mañana en adelante)</li>
+        </ul>
         
-        <h4 className="font-bold mb-2">Confirmar citas</h4>
-        <p className="mb-4">Las citas programadas a través de WhatsApp se marcan como "Pendientes" hasta que las confirmes manualmente.</p>
+        <h4 class="font-bold mb-2">🔍 Filtros y Búsqueda</h4>
+        <p class="mb-4">Usa los filtros por estado para ver:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li><strong>Todas:</strong> Todas las citas</li>
+          <li><strong>Pendiente:</strong> Citas sin confirmar</li>
+          <li><strong>Confirmada:</strong> Citas confirmadas</li>
+          <li><strong>Cancelada:</strong> Citas canceladas</li>
+          <li><strong>Reprogramada:</strong> Citas que fueron movidas</li>
+        </ul>
         
-        <h4 className="font-bold mb-2">Cancelar o reprogramar</h4>
-        <p className="mb-4">Puedes cancelar o reprogramar citas desde la tabla de citas. Los pacientes también pueden hacerlo a través de WhatsApp.</p>
+        <h4 class="font-bold mb-2">⚡ Acciones Rápidas</h4>
+        <p class="mb-4">Desde la tabla de citas puedes:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li><strong>Confirmar:</strong> Marca una cita pendiente como confirmada</li>
+          <li><strong>Reprogramar:</strong> Cambia la fecha/hora de una cita</li>
+          <li><strong>Cancelar:</strong> Cancela una cita</li>
+        </ul>
+        
+        <h4 class="font-bold mb-2">📊 Vista de Calendario</h4>
+        <p class="mb-4">Alterna entre vista de lista y calendario usando los botones en la parte superior para visualizar mejor la agenda.</p>
       `
     },
     {
-      id: 'patients',
-      title: 'Gestión de Pacientes',
-      icon: 'groups',
+      id: 'dashboard',
+      title: 'Dashboard',
+      icon: 'dashboard',
       content: `
-        <h3 className="text-lg font-bold mb-2">Administra tu base de pacientes</h3>
-        <p className="mb-4">La sección "Pacientes" te permite mantener un registro de todos tus pacientes:</p>
+        <h3 class="text-lg font-bold mb-2">Panel de Control</h3>
+        <p class="mb-4">El Dashboard es tu centro de comando con información en tiempo real:</p>
         
-        <h4 className="font-bold mb-2">Agregar pacientes</h4>
-        <p className="mb-4">Puedes agregar pacientes manualmente o se crearán automáticamente cuando programen una cita a través de WhatsApp.</p>
+        <h4 class="font-bold mb-2">📊 Métricas Principales</h4>
+        <p class="mb-4">Visualiza rápidamente:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li><strong>Citas Hoy:</strong> Número de consultas programadas para hoy</li>
+          <li><strong>Citas Mañana:</strong> Consultas del día siguiente</li>
+          <li><strong>Mensajes sin leer:</strong> Conversaciones pendientes de atención</li>
+        </ul>
         
-        <h4 className="font-bold mb-2">Buscar pacientes</h4>
-        <p className="mb-4">Utiliza la barra de búsqueda para encontrar pacientes por nombre, correo o teléfono.</p>
+        <h4 class="font-bold mb-2">🤖 Laura AI Insights</h4>
+        <p class="mb-4">La tarjeta de insights inteligentes te muestra sugerencias automáticas basadas en el estado actual:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li>Optimización de agenda si hay huecos libres</li>
+          <li>Alertas sobre mensajes pendientes</li>
+          <li>Recordatorios de confirmaciones pendientes</li>
+        </ul>
         
-        <h4 className="font-bold mb-2">Editar información</h4>
-        <p className="mb-4">Mantén actualizada la información de contacto de tus pacientes para facilitar la comunicación.</p>
+        <h4 class="font-bold mb-2">📨 Mensajes Recientes</h4>
+        <p class="mb-4">Ve las últimas 4 conversaciones con pacientes y accede rápidamente a responderlas.</p>
+        
+        <h4 class="font-bold mb-2">📅 Próximas Citas</h4>
+        <p class="mb-4">Lista de las siguientes 3 citas programadas con estado y detalles del paciente.</p>
+        
+        <h4 class="font-bold mb-2">📢 Comunicados</h4>
+        <p class="mb-4">Si hay anuncios activos del administrador, aparecerán en un banner destacado en la parte superior.</p>
       `
     },
     {
       id: 'messages',
-      title: 'Mensajes',
+      title: 'Mensajes (Solo Admin)',
       icon: 'chat',
       content: `
-        <h3 className="text-lg font-bold mb-2">Comunicación con pacientes</h3>
-        <p className="mb-4">La sección "Mensajes" te permite interactuar con tus pacientes:</p>
+        <h3 class="text-lg font-bold mb-2">Comunicación con Pacientes</h3>
+        <p class="mb-4"><em>Nota: Este módulo solo está disponible para administradores.</em></p>
         
-        <h4 className="font-bold mb-2">Conversaciones activas</h4>
-        <p className="mb-4">Aquí verás todas las conversaciones en curso con tus pacientes a través de WhatsApp.</p>
+        <h4 class="font-bold mb-2">💬 Conversaciones</h4>
+        <p class="mb-4">Visualiza todas las conversaciones activas con pacientes a través de WhatsApp. Cada conversación muestra:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li>Nombre del paciente</li>
+          <li>Último mensaje recibido</li>
+          <li>Estado de lectura</li>
+          <li>Hora del último mensaje</li>
+        </ul>
         
-        <h4 className="font-bold mb-2">Respuestas automáticas</h4>
-        <p className="mb-4">Laura AI responde automáticamente a las solicitudes comunes como programación de citas, horarios y servicios.</p>
+        <h4 class="font-bold mb-2">🤖 Respuestas Automáticas</h4>
+        <p class="mb-4">Laura AI responde automáticamente a:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li>Solicitudes de citas</li>
+          <li>Consultas sobre horarios</li>
+          <li>Información de servicios</li>
+          <li>Preguntas frecuentes</li>
+        </ul>
         
-        <h4 className="font-bold mb-2">Intervención manual</h4>
-        <p className="mb-4">Puedes tomar el control de cualquier conversación y responder directamente como usuario.</p>
+        <h4 class="font-bold mb-2">✍️ Intervención Manual</h4>
+        <p class="mb-4">Puedes tomar el control de cualquier conversación y responder directamente cuando sea necesario.</p>
+        
+        <h4 class="font-bold mb-2">🗑️ Gestión de Conversaciones</h4>
+        <p class="mb-4">Elimina conversaciones antiguas o irrelevantes para mantener tu bandeja organizada.</p>
+      `
+    },
+    {
+      id: 'patients',
+      title: 'Pacientes (Solo Admin)',
+      icon: 'groups',
+      content: `
+        <h3 class="text-lg font-bold mb-2">Base de Datos de Pacientes</h3>
+        <p class="mb-4"><em>Nota: Este módulo solo está disponible para administradores.</em></p>
+        
+        <h4 class="font-bold mb-2">➕ Agregar Pacientes</h4>
+        <p class="mb-4">Registra nuevos pacientes con:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li>Información personal (nombre, apellido, cédula)</li>
+          <li>Datos de contacto (teléfono, email)</li>
+          <li>Fecha de nacimiento</li>
+        </ul>
+        
+        <h4 class="font-bold mb-2">🔍 Búsqueda Avanzada</h4>
+        <p class="mb-4">Encuentra pacientes rápidamente por nombre, cédula, teléfono o email usando la barra de búsqueda.</p>
+        
+        <h4 class="font-bold mb-2">✏️ Editar Información</h4>
+        <p class="mb-4">Actualiza los datos de contacto y personales de los pacientes cuando sea necesario.</p>
+        
+        <h4 class="font-bold mb-2">📋 Historial</h4>
+        <p class="mb-4">Cada paciente muestra su historial de citas y comunicaciones con el centro de salud.</p>
       `
     },
     {
       id: 'doctors',
-      title: 'Gestión de Médicos',
+      title: 'Médicos (Solo Admin)',
       icon: 'stethoscope',
       content: `
-        <h3 className="text-lg font-bold mb-2">Administra tu equipo médico</h3>
-        <p className="mb-4">En la sección "Médicos" puedes gestionar a los profesionales de tu clínica:</p>
+        <h3 class="text-lg font-bold mb-2">Gestión del Equipo Médico</h3>
+        <p class="mb-4"><em>Nota: Este módulo solo está disponible para administradores.</em></p>
         
-        <h4 className="font-bold mb-2">Agregar médicos</h4>
-        <p className="mb-4">Registra a cada médico con su nombre completo, especialidad y foto de perfil.</p>
+        <h4 class="font-bold mb-2">👨‍⚕️ Agregar Médicos</h4>
+        <p class="mb-4">Registra a los profesionales de salud con:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li>Nombre completo</li>
+          <li>Especialidad</li>
+          <li>Foto de perfil</li>
+          <li>Estado (activo/inactivo)</li>
+        </ul>
         
-        <h4 className="font-bold mb-2">Activar/Desactivar</h4>
-        <p className="mb-4">Puedes activar o desactivar médicos según su disponibilidad.</p>
+        <h4 class="font-bold mb-2">🔄 Activar/Desactivar</h4>
+        <p class="mb-4">Controla la disponibilidad de cada médico para recibir citas. Los médicos inactivos no aparecen en el formulario de nueva cita.</p>
         
-        <h4 className="font-bold mb-2">Editar información</h4>
-        <p className="mb-4">Actualiza la información de los médicos cuando sea necesario.</p>
-      `
-    },
-    {
-      id: 'settings',
-      title: 'Configuración',
-      icon: 'settings',
-      content: `
-        <h3 className="text-lg font-bold mb-2">Configura tu clínica</h3>
-        <p className="mb-4">La sección "Configuración" es fundamental para el funcionamiento de Laura AI:</p>
+        <h4 class="font-bold mb-2">✏️ Editar Información</h4>
+        <p class="mb-4">Actualiza la especialidad, foto o cualquier dato del médico cuando sea necesario.</p>
         
-        <h4 className="font-bold mb-2">Información básica</h4>
-        <p className="mb-4">Ingresa el nombre, especialidad y descripción de tu clínica.</p>
-        
-        <h4 className="font-bold mb-2">Contacto y ubicación</h4>
-        <p className="mb-4">Registra la dirección, teléfono y correo electrónico de tu clínica.</p>
-        
-        <h4 className="font-bold mb-2">Horarios de atención</h4>
-        <p className="mb-4">Configura los horarios de atención para cada día de la semana.</p>
-        
-        <h4 className="font-bold mb-2">Servicios ofrecidos</h4>
-        <p className="mb-4">Define qué servicios ofrece tu clínica para que Laura AI pueda mencionarlos.</p>
-        
-        <h4 className="font-bold mb-2">Webhook de WhatsApp</h4>
-        <p className="mb-4">Copia la URL del webhook y configúrala en tu cuenta de Facebook Business para recibir mensajes.</p>
+        <h4 class="font-bold mb-2">📊 Estadísticas</h4>
+        <p class="mb-4">En la sección de Reportes puedes ver cuántas citas ha atendido cada médico.</p>
       `
     },
     {
       id: 'reports',
-      title: 'Reportes',
+      title: 'Reportes (Solo Admin)',
       icon: 'analytics',
       content: `
-        <h3 className="text-lg font-bold mb-2">Analiza el desempeño de tu clínica</h3>
-        <p className="mb-4">La sección "Reportes" te proporciona estadísticas valiosas:</p>
+        <h3 class="text-lg font-bold mb-2">Análisis y Estadísticas</h3>
+        <p class="mb-4"><em>Nota: Este módulo solo está disponible para administradores.</em></p>
         
-        <h4 className="font-bold mb-2">Citas por día</h4>
-        <p className="mb-4">Visualiza la cantidad de citas programadas por día en un gráfico.</p>
+        <h4 class="font-bold mb-2">📊 Dashboard Analítico</h4>
+        <p class="mb-4">Visualiza métricas clave del centro de salud:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li><strong>Citas Totales:</strong> Con comparativa del período anterior</li>
+          <li><strong>Pacientes Totales:</strong> Con indicador de nuevos pacientes</li>
+          <li><strong>Mensajes AI:</strong> Interacciones con Laura AI</li>
+          <li><strong>Tasa de Confirmación:</strong> Porcentaje de citas confirmadas</li>
+        </ul>
         
-        <h4 className="font-bold mb-2">Estado de citas</h4>
-        <p className="mb-4">Consulta la distribución de citas confirmadas, pendientes y canceladas.</p>
+        <h4 class="font-bold mb-2">📈 Gráficos Interactivos</h4>
+        <p class="mb-4">Pestañas con diferentes vistas:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li><strong>Citas:</strong> Volumen diario y distribución por estado</li>
+          <li><strong>Médicos:</strong> Rendimiento comparativo del equipo</li>
+          <li><strong>Actividad:</strong> Eficiencia de Laura AI y tiempos de respuesta</li>
+        </ul>
         
-        <h4 className="font-bold mb-2">Citas por médico</h4>
-        <p className="mb-4">Analiza cuántas citas ha atendido cada médico de tu equipo.</p>
+        <h4 class="font-bold mb-2">📅 Filtros de Fecha</h4>
+        <p class="mb-4">Selecciona rangos de fechas personalizados para análisis específicos.</p>
         
-        <h4 className="font-bold mb-2">Filtros de fecha</h4>
-        <p className="mb-4">Filtra los reportes por rangos de fechas específicos para análisis personalizados.</p>
+        <h4 class="font-bold mb-2">💾 Exportar Datos</h4>
+        <p class="mb-4">Usa el botón de descarga para exportar los reportes (función próximamente).</p>
+      `
+    },
+    {
+      id: 'admin-features',
+      title: 'Funciones de Admin',
+      icon: 'verified_user',
+      content: `
+        <h3 class="text-lg font-bold mb-2">Herramientas Administrativas</h3>
+        <p class="mb-4">Funcionalidades exclusivas para administradores:</p>
+        
+        <h4 class="font-bold mb-2">👥 Gestión de Usuarios</h4>
+        <p class="mb-4">En el módulo "Usuarios" puedes:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li>Ver todos los usuarios del sistema</li>
+          <li>Cambiar roles (Usuario ↔ Administrador)</li>
+          <li>Activar o desactivar cuentas</li>
+          <li>Buscar usuarios por nombre o email</li>
+        </ul>
+        
+        <h4 class="font-bold mb-2">📢 Comunicados Internos</h4>
+        <p class="mb-4">Crea anuncios que aparecen en el dashboard de todos los usuarios:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li><strong>Tipos:</strong> Info, Advertencia, Éxito, Error</li>
+          <li><strong>Activar/Desactivar:</strong> Controla cuándo se muestran</li>
+          <li><strong>Múltiples anuncios:</strong> Se muestran en carrusel</li>
+        </ul>
+        
+        <h4 class="font-bold mb-2">⚙️ Configuración del Sistema</h4>
+        <p class="mb-4">Personaliza parámetros del centro de salud:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li>Información de la clínica</li>
+          <li>Horarios de atención</li>
+          <li>Tipos de citas disponibles</li>
+          <li>Configuración de WhatsApp</li>
+        </ul>
+        
+        <h4 class="font-bold mb-2">🔒 Seguridad</h4>
+        <p class="mb-4">Recuerda:</p>
+        <ul class="list-disc pl-6 mb-4">
+          <li>No puedes degradar tu propio rol de administrador</li>
+          <li>Mantén al menos 2 administradores activos</li>
+          <li>Revisa periódicamente los permisos de usuarios</li>
+        </ul>
       `
     }
   ];
@@ -156,14 +344,6 @@ const Help = () => {
     section.content.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleLogout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) {
-      showError('Error al cerrar sesión: ' + error.message);
-    } else {
-      showSuccess('Sesión cerrada correctamente.');
-    }
-  };
 
   if (isSessionLoading) {
     return (
@@ -173,232 +353,114 @@ const Help = () => {
     );
   }
 
-  const userName = user?.user_metadata?.first_name || user?.email?.split('@')[0] || 'Usuario';
-  const userRole = user?.user_metadata?.role || 'Admin';
-  const userAvatar = user?.user_metadata?.avatar_url || null;
 
   return (
-    <div className="bg-background-light dark:bg-background-dark text-text-main h-screen overflow-hidden flex">
-      {/* Side Navigation Bar */}
-      <aside className="w-72 bg-surface-light dark:bg-surface-dark border-r border-[#e7f3f2] dark:border-[#2a3c3b] flex flex-col hidden md:flex flex-shrink-0 transition-all z-20">
-        <div className="p-6 pb-2">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary/20 p-2 rounded-xl">
-              <span className="material-symbols-outlined text-primary-dark font-bold">medical_services</span>
-            </div>
-            <div className="flex flex-col">
-              <h1 className="text-text-main dark:text-white text-lg font-bold leading-tight">Laura AI</h1>
-              <p className="text-text-secondary text-xs font-medium">Asistente Virtual</p>
+    <div className="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark relative">
+      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-2xl font-bold text-text-main dark:text-white mb-2">Centro de Ayuda</h1>
+            <p className="text-text-secondary">Encuentra respuestas a preguntas frecuentes y guías de uso</p>
+          </div>
+
+          <div className="mb-8">
+            <div className="relative max-w-2xl">
+              <input
+                type="text"
+                placeholder="Buscar en la ayuda..."
+                className="w-full px-4 py-3 pl-12 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+              <span className="material-symbols-outlined absolute left-4 top-1/2 transform -translate-y-1/2 text-text-secondary">
+                search
+              </span>
             </div>
           </div>
-        </div>
-        <nav className="flex-1 px-4 py-6 flex flex-col gap-2 overflow-y-auto">
-          <Link
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/dashboard' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
-            to="/dashboard"
-          >
-            <span className={`material-symbols-outlined ${location.pathname === '/dashboard' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>dashboard</span>
-            <p className={`text-sm font-semibold ${location.pathname === '/dashboard' ? 'text-text-main dark:text-white' : ''}`}>Dashboard</p>
-          </Link>
-          <Link
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/messages' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
-            to="/messages"
-          >
-            <span className={`material-symbols-outlined ${location.pathname === '/messages' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>chat</span>
-            <p className={`text-sm font-medium ${location.pathname === '/messages' ? 'text-text-main dark:text-white' : ''}`}>Mensajes</p>
-          </Link>
-          <Link
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/patients' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
-            to="/patients"
-          >
-            <span className={`material-symbols-outlined ${location.pathname === '/patients' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>groups</span>
-            <p className={`text-sm font-medium ${location.pathname === '/patients' ? 'text-text-main dark:text-white' : ''}`}>Pacientes</p>
-          </Link>
-          <Link
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/appointments' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
-            to="/appointments"
-          >
-            <span className={`material-symbols-outlined ${location.pathname === '/appointments' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>calendar_month</span>
-            <p className={`text-sm font-medium ${location.pathname === '/appointments' ? 'text-text-main dark:text-white' : ''}`}>Citas</p>
-          </Link>
-          <Link
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/doctors' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
-            to="/doctors"
-          >
-            <span className={`material-symbols-outlined ${location.pathname === '/doctors' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>stethoscope</span>
-            <p className={`text-sm font-medium ${location.pathname === '/doctors' ? 'text-text-main dark:text-white' : ''}`}>Médicos</p>
-          </Link>
-          {isAdmin && (
-            <Link
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/users' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
-              to="/users"
-            >
-              <span className={`material-symbols-outlined ${location.pathname === '/users' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>group</span>
-              <p className={`text-sm font-medium ${location.pathname === '/users' ? 'text-text-main dark:text-white' : ''}`}>Usuarios</p>
-            </Link>
-          )}
-          <Link
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/reports' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
-            to="/reports"
-          >
-            <span className={`material-symbols-outlined ${location.pathname === '/reports' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>analytics</span>
-            <p className={`text-sm font-medium ${location.pathname === '/reports' ? 'text-text-main dark:text-white' : ''}`}>Reportes</p>
-          </Link>
-          <Link
-            className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/settings' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
-            to="/settings"
-          >
-            <span className={`material-symbols-outlined ${location.pathname === '/settings' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>settings</span>
-            <p className={`text-sm font-medium ${location.pathname === '/settings' ? 'text-text-main dark:text-white' : ''}`}>Configuración</p>
-          </Link>
-          <div className="mt-auto pt-4 border-t border-[#e7f3f2] dark:border-[#2a3c3b]">
-            <Link
-              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-colors group ${location.pathname === '/help' ? 'bg-[#e7f3f2] dark:bg-primary/10' : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5 text-text-secondary dark:text-gray-400 hover:text-text-main dark:hover:text-white'}`}
-              to="/help"
-            >
-              <span className={`material-symbols-outlined ${location.pathname === '/help' ? 'text-text-main dark:text-primary' : 'group-hover:text-text-main dark:group-hover:text-white'} transition-colors`}>help_outline</span>
-              <p className={`text-sm font-medium ${location.pathname === '/help' ? 'text-text-main dark:text-white' : ''}`}>Ayuda</p>
-            </Link>
-          </div>
-        </nav>
-        <div className="p-4 border-t border-[#e7f3f2] dark:border-[#2a3c3b]">
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 rounded-xl h-12 bg-primary hover:bg-primary-dark transition-colors text-text-main font-bold text-sm tracking-wide shadow-sm shadow-primary/20"
-          >
-            <span className="material-symbols-outlined text-[20px]">logout</span>
-            <span>Cerrar sesión</span>
-          </button>
-        </div>
-      </aside>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark relative">
-        {/* Top Header */}
-        <header className="h-20 bg-surface-light dark:bg-surface-dark border-b border-[#e7f3f2] dark:border-[#2a3c3b] flex items-center justify-between px-6 sticky top-0 z-10">
-          <div className="flex items-center gap-4">
-            <button className="md:hidden p-2 text-text-main hover:bg-gray-100 rounded-lg">
-              <span className="material-symbols-outlined">menu</span>
-            </button>
-            <div className="hidden sm:flex items-center justify-center size-10 rounded-full bg-primary/10 text-primary-dark">
-              <span className="material-symbols-outlined">help</span>
-            </div>
-            <div>
-              <h2 className="text-text-main dark:text-white text-lg font-bold leading-tight">Ayuda</h2>
-              <p className="text-text-secondary text-xs hidden sm:block">Guía de uso de Laura AI</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-4 sm:gap-6">
-            <button className="relative p-2 text-text-secondary hover:text-primary transition-colors rounded-full hover:bg-primary/10">
-              <span className="material-symbols-outlined">notifications</span>
-              <span className="absolute top-1.5 right-1.5 size-2 bg-red-500 rounded-full border-2 border-surface-light"></span>
-            </button>
-            <Link
-              to="/help"
-              className="flex items-center justify-center gap-2 bg-white dark:bg-surface-dark border border-[#e7f3f2] dark:border-[#2a3c3b] rounded-lg px-3 py-2 text-sm font-medium text-text-main dark:text-white hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[20px]">help</span>
-              <span>Ayuda</span>
-            </Link>
-          </div>
-        </header>
-
-        {/* Main Content */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="mb-8">
-              <h1 className="text-2xl font-bold text-text-main dark:text-white mb-2">Centro de Ayuda</h1>
-              <p className="text-text-secondary">Encuentra respuestas a preguntas frecuentes y guías de uso</p>
-            </div>
-
-            {/* Search Bar */}
-            <div className="mb-8">
-              <div className="relative max-w-2xl">
-                <input
-                  type="text"
-                  placeholder="Buscar en la ayuda..."
-                  className="w-full px-4 py-3 pl-12 rounded-xl border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark text-text-main dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                <span className="material-symbols-outlined absolute left-4 top-1/2 transform -translate-y-1/2 text-text-secondary">
-                  search
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-col lg:flex-row gap-8">
-              {/* Sidebar with Sections */}
-              <div className="lg:w-1/4">
-                <div className="bg-surface-light dark:bg-surface-dark rounded-2xl p-4 border border-border-light dark:border-border-dark">
-                  <h2 className="text-lg font-bold text-text-main dark:text-white mb-4">Temas de Ayuda</h2>
-                  <ul className="space-y-2">
-                    {filteredSections.map((section) => (
-                      <li key={section.id}>
-                        <button
-                          onClick={() => setActiveSection(section.id)}
-                          className={`w-full text-left px-4 py-3 rounded-lg flex items-center gap-3 transition-colors ${
-                            activeSection === section.id
-                              ? 'bg-primary/10 text-primary font-medium'
-                              : 'hover:bg-[#f2f8f7] dark:hover:bg-white/5'
+          <div className="flex flex-col lg:flex-row gap-8">
+            <div className="lg:w-1/4">
+              <div className="bg-surface-light dark:bg-surface-dark rounded-2xl p-4 border border-border-light dark:border-border-dark shadow-sm">
+                <h2 className="text-lg font-bold text-text-main dark:text-white mb-4 px-2">Temas de Ayuda</h2>
+                <ul className="space-y-1">
+                  {filteredSections.map((section) => (
+                    <li key={section.id}>
+                      <button
+                        onClick={() => setActiveSection(section.id)}
+                        className={`w-full text-left px-4 py-3 rounded-xl flex items-center gap-3 transition-all ${activeSection === section.id
+                          ? 'bg-primary/10 text-primary-dark dark:text-primary font-bold'
+                          : 'text-text-secondary dark:text-slate-400 hover:bg-[#f2f8f7] dark:hover:bg-white/5 hover:text-text-main dark:hover:text-white'
                           }`}
-                        >
-                          <span className="material-symbols-outlined">{section.icon}</span>
-                          <span>{section.title}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                      >
+                        <span className="material-symbols-outlined">{section.icon}</span>
+                        <span className="text-sm">{section.title}</span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               </div>
+            </div>
 
-              {/* Content Area */}
-              <div className="lg:w-3/4">
-                <div className="bg-surface-light dark:bg-surface-dark rounded-2xl p-6 border border-border-light dark:border-border-dark">
-                  {filteredSections
-                    .filter((section) => section.id === activeSection)
-                    .map((section) => (
-                      <div key={section.id}>
-                        <div className="flex items-center gap-3 mb-6">
-                          <span className="material-symbols-outlined text-primary text-3xl">
+            <div className="lg:w-3/4">
+              <div className="bg-surface-light dark:bg-surface-dark rounded-2xl p-6 border border-border-light dark:border-border-dark shadow-sm min-h-[400px]">
+                {filteredSections
+                  .filter((section) => section.id === activeSection)
+                  .map((section) => (
+                    <div key={section.id} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+                      <div className="flex items-center gap-3 mb-8 border-b border-border-light dark:border-border-dark pb-6">
+                        <div className="bg-primary/10 p-3 rounded-2xl">
+                          <span className="material-symbols-outlined text-primary-dark dark:text-primary text-3xl">
                             {section.icon}
                           </span>
-                          <h2 className="text-2xl font-bold text-text-main dark:text-white">
-                            {section.title}
-                          </h2>
                         </div>
-                        <div
-                          className="prose prose-lg max-w-none dark:prose-invert"
-                          dangerouslySetInnerHTML={{ __html: section.content }}
-                        />
+                        <h2 className="text-2xl font-bold text-text-main dark:text-white">
+                          {section.title}
+                        </h2>
                       </div>
-                    ))}
-                </div>
+                      <div
+                        className="prose prose-slate dark:prose-invert max-w-none prose-h3:text-xl prose-h3:font-bold prose-h4:text-lg prose-h4:font-bold prose-p:text-text-secondary dark:prose-p:text-slate-400"
+                        dangerouslySetInnerHTML={{ __html: section.content }}
+                      />
+                    </div>
+                  ))}
 
-                {/* Contact Support */}
-                <div className="mt-8 bg-surface-light dark:bg-surface-dark rounded-2xl p-6 border border-border-light dark:border-border-dark">
-                  <h3 className="text-lg font-bold text-text-main dark:text-white mb-4">
-                    ¿Necesitas más ayuda?
-                  </h3>
-                  <p className="text-text-secondary mb-4">
-                    Si no encuentras lo que buscas, nuestro equipo de soporte está aquí para ayudarte.
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <button className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-dark text-text-main font-bold shadow-lg shadow-primary/20 transition-all">
-                      <span className="material-symbols-outlined">email</span>
-                      <span>Contactar por correo</span>
+                {filteredSections.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-20 text-center">
+                    <div className="bg-slate-100 dark:bg-white/5 p-4 rounded-full mb-4">
+                      <span className="material-symbols-outlined text-slate-400 text-4xl">search_off</span>
+                    </div>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">No se encontraron resultados</h3>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1 max-w-xs">Intenta con otros términos de búsqueda.</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-8 bg-surface-light dark:bg-surface-dark rounded-2xl p-8 border border-border-light dark:border-border-dark shadow-sm bg-gradient-to-br from-primary/5 to-transparent">
+                <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div>
+                    <h3 className="text-xl font-bold text-text-main dark:text-white mb-2">
+                      ¿Necesitas más ayuda?
+                    </h3>
+                    <p className="text-text-secondary dark:text-slate-400">
+                      Si no encuentras lo que buscas, nuestro equipo de soporte está aquí para ayudarte.
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+                    <button className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary hover:bg-primary-dark text-teal-950 font-bold shadow-lg shadow-primary/20 transition-all">
+                      <span className="material-symbols-outlined text-[20px]">email</span>
+                      <span>Correo</span>
                     </button>
-                    <button className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-main dark:text-white font-bold hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-all">
-                      <span className="material-symbols-outlined">chat</span>
-                      <span>Chat en vivo</span>
+                    <button className="flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-main dark:text-white font-bold hover:bg-[#f2f8f7] dark:hover:bg-white/5 transition-all">
+                      <span className="material-symbols-outlined text-[20px]">chat</span>
+                      <span>Chat</span>
                     </button>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };
