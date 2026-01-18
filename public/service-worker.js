@@ -1,9 +1,7 @@
-const CACHE_NAME = 'laura-ai-cache-v1';
+const CACHE_NAME = 'laura-ai-cache-v2';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/src/main.tsx',
-  '/src/globals.css',
   '/public/favicon.ico',
   '/public/android-chrome-192x192.png',
   '/public/android-chrome-512x512.png',
@@ -12,6 +10,7 @@ const urlsToCache = [
 ];
 
 self.addEventListener('install', (event) => {
+  self.skipWaiting(); // Force new SW to take control immediately
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
